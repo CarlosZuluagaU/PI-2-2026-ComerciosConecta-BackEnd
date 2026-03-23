@@ -5,6 +5,8 @@ public class AuthResponse {
     private String accessToken;
     private long expiresIn;
     private String refreshToken;
+    private Integer comercioId;
+    private String nombre;
 
 
     public AuthResponse() {}
@@ -14,6 +16,21 @@ public class AuthResponse {
         this.accessToken = accessToken;
         this.expiresIn = expiresIn;
         this.refreshToken = refreshToken;
+    }
+
+    public AuthResponse(String accessToken, long expiresIn, String refreshToken, Integer comercioId) {
+        this.accessToken = accessToken;
+        this.expiresIn = expiresIn;
+        this.refreshToken = refreshToken;
+        this.comercioId = comercioId;
+    }
+
+    public AuthResponse(String accessToken, long expiresIn, String refreshToken, Integer comercioId, String nombre) {
+        this.accessToken = accessToken;
+        this.expiresIn = expiresIn;
+        this.refreshToken = refreshToken;
+        this.comercioId = comercioId;
+        this.nombre = nombre;
     }
 
     // ===== Getters y Setters =====
@@ -39,5 +56,21 @@ public class AuthResponse {
 
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public Integer getComercioId() {
+        return comercioId;
+    }
+
+    public void setComercioId(Integer comercioId) {
+        this.comercioId = comercioId;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 }

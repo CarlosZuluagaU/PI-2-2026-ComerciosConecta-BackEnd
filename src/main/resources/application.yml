@@ -77,8 +77,9 @@ spring:
   flyway:
     enabled: false
 
+---
 # =========== CONFIGURACIÓN COMÚN ===========
-# (Se aplica a todos los perfiles a menos que se sobrescriba)
+# (Se aplica a todos los perfiles)
 jwt:
   secret: ${JWT_SECRET:change_this_secret_for_production_use_a_strong_secret_here}
   access-expiration-ms: 900000          # 15 min
@@ -91,9 +92,9 @@ app:
       - "https://front.vercel.app"
 
 wompi:
-  public-key: ${WOMPI_PUBLIC_KEY}
-  private-key: ${WOMPI_PRIVATE_KEY}
-  events-secret: ${WOMPI_EVENTS_SECRET}
+  public-key: ${WOMPI_PUBLIC_KEY:}
+  private-key: ${WOMPI_PRIVATE_KEY:}
+  events-secret: ${WOMPI_EVENTS_SECRET:}
 
 factus:
   base-url: ${FACTUS_BASE_URL:https://api-sandbox.factus.com.co}

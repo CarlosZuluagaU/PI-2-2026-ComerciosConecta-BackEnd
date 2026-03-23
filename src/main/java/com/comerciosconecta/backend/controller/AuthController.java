@@ -63,7 +63,7 @@ public class AuthController {
         UserDetails ud = userDetailsService.loadUserByUsername(req.getEmail());
         String accessToken = jwtUtil.generateAccessToken(ud);
         String refreshToken = jwtUtil.generateRefreshToken(ud);
-        return ResponseEntity.ok(new AuthResponse(accessToken, jwtUtil.getAccessExpirationMs(), refreshToken));
+        return ResponseEntity.ok(new AuthResponse(accessToken, jwtUtil.getAccessExpirationMs(), refreshToken, comercio.getId(), usuario.getNombre()));
     }
 
     // ===== LOGIN =====
@@ -76,8 +76,11 @@ public class AuthController {
         String accessToken = jwtUtil.generateAccessToken(ud);
         String refreshToken = jwtUtil.generateRefreshToken(ud);
 
-        // Devuelve ambos tokens en el body
-        return ResponseEntity.ok(new AuthResponse(accessToken, jwtUtil.getAccessExpirationMs(), refreshToken));
+        var usuarioOpt = usuarioRepository.findByEmail(req.getEmail());
+        Integer comercioId = usuarioOpt.map(u -> u.getComercio() != null ? u.getComercio().getId() : null).orElse(null);
+        String nombre = usuarioOpt.map(com.comerciosconecta.backend.entity.Usuario::getNombre).orElse(null);
+
+        return ResponseEntity.ok(new AuthResponse(accessToken, jwtUtil.getAccessExpirationMs(), refreshToken, comercioId, nombre));
     }
 
     // ===== REFRESH TOKEN =====
@@ -97,6 +100,56 @@ public class AuthController {
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    // ===== UPDATE PROFILE =====
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body, jakarta.servlet.http.HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        try {
+            String email = jwtUtil.extractUsername(header.substring(7));
+            var usuarioOpt = usuarioRepository.findByEmail(email);
+            if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            com.comerciosconecta.backend.entity.Usuario u = usuarioOpt.get();
+            if (body.containsKey("nombre") && !body.get("nombre").isBlank()) u.setNombre(body.get("nombre"));
+            if (body.containsKey("telefono")) u.setTelefono(body.get("telefono"));
+            if (body.containsKey("password") && !body.get("password").isBlank())
+                u.setPassword(passwordEncoder.encode(body.get("password")));
+            usuarioRepository.save(u);
+            return ResponseEntity.ok(Map.of(
+                "nombre", u.getNombre() != null ? u.getNombre() : "",
+                "email", u.getEmail(),
+                "telefono", u.getTelefono() != null ? u.getTelefono() : ""
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // ===== ME =====
+    @GetMapping("/me")
+    public ResponseEntity<?> me(jakarta.servlet.http.HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            String token = header.substring(7);
+            String email = jwtUtil.extractUsername(token);
+            Integer cid = usuarioRepository.findByEmail(email)
+                    .map(u -> u.getComercio() != null ? u.getComercio().getId() : null)
+                    .orElse(null);
+            var u2 = usuarioRepository.findByEmail(email).orElseThrow();
+            return ResponseEntity.ok(Map.of(
+                "email", email,
+                "nombre", u2.getNombre() != null ? u2.getNombre() : "",
+                "telefono", u2.getTelefono() != null ? u2.getTelefono() : "",
+                "comercioId", cid != null ? cid : ""
+            ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

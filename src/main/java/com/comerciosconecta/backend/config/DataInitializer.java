@@ -28,28 +28,35 @@ public class DataInitializer {
                 return rolRepo.save(r);
             });
 
-            // Crear comercio demo si no existe
-            Comercio comercioDemo = comercioRepo.count() == 0 ? new Comercio() : null;
-            if (comercioDemo != null) {
-                comercioDemo.setNombre("Tienda Demo");
-                comercioDemo.setNit("900000001");
-                comercioDemo.setEmail("demo@tienda.local");
-
-                comercioDemo = comercioRepo.save(comercioDemo);
+            // Crear comercio demo si no existe ninguno
+            final Comercio[] holder = new Comercio[1];
+            if (comercioRepo.count() == 0) {
+                Comercio c = new Comercio();
+                c.setNombre("Tienda Demo");
+                c.setNit("900000001");
+                c.setEmail("demo@tienda.local");
+                holder[0] = comercioRepo.save(c);
+            } else {
+                holder[0] = comercioRepo.findAll().get(0);
             }
+            final Comercio comercioDemo = holder[0];
 
-            // Crear usuario admin demo si no existe
-            if (usuarioRepo.findByEmail("alejo@gmail.com").isEmpty()) {
+            // Crear usuario admin demo si no existe; si existe pero sin comercio, asignarle uno
+            usuarioRepo.findByEmail("alejo@gmail.com").ifPresentOrElse(u -> {
+                if (u.getComercio() == null) {
+                    u.setComercio(comercioDemo);
+                    usuarioRepo.save(u);
+                }
+            }, () -> {
                 Usuario u = new Usuario();
                 u.setComercio(comercioDemo);
                 u.setNombre("Admin Demo");
                 u.setEmail("alejo@gmail.com");
                 u.setPassword(encoder.encode("12345678"));
-                u.setEstado(EstadoGeneral.Activo); // uso del enum
+                u.setEstado(EstadoGeneral.Activo);
                 u.getRoles().add(rolAdmin);
-
                 usuarioRepo.save(u);
-            }
+            });
         };
     }
 }

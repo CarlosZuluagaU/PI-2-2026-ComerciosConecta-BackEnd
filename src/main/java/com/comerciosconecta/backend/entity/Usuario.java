@@ -19,6 +19,8 @@ public class Usuario {
 
     private String nombre;
 
+    private String telefono;
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -64,6 +66,14 @@ public class Usuario {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
     }
 
     public String getEmail() {

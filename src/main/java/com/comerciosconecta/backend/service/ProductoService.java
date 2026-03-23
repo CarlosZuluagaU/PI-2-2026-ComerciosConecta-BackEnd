@@ -2,6 +2,7 @@ package com.comerciosconecta.backend.service;
 
 import com.comerciosconecta.backend.dto.ProductoDTO;
 import com.comerciosconecta.backend.entity.Producto;
+import com.comerciosconecta.backend.repository.ComercioRepository;
 import com.comerciosconecta.backend.repository.ProductoRepository;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +14,11 @@ import java.util.stream.Collectors;
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
+    private final ComercioRepository comercioRepository;
 
-    public ProductoService(ProductoRepository productoRepository) {
+    public ProductoService(ProductoRepository productoRepository, ComercioRepository comercioRepository) {
         this.productoRepository = productoRepository;
+        this.comercioRepository = comercioRepository;
     }
 
     // ------------------- Métodos privados de ayuda -------------------
@@ -41,6 +44,7 @@ public class ProductoService {
         producto.setStockMinimo(dto.getStockMinimo());
         producto.setProveedor(dto.getProveedor());
         producto.setDescripcion(dto.getDescripcion());
+        producto.setImagenUrl(dto.getImagenUrl());
         producto.setFechaActualizacion(dto.getFechaActualizacion());
         producto.setUsuarioActualizacion(dto.getUsuarioActualizacion());
         return producto;
@@ -49,22 +53,25 @@ public class ProductoService {
     // ------------------- CRUD -------------------
 
     // Crear producto
-    public ProductoDTO crearProducto(ProductoDTO dto) {
+    public ProductoDTO crearProducto(ProductoDTO dto, Integer comercioId) {
         if (dto.getPrecioVenta() <= dto.getPrecioCompra()) {
             throw new IllegalArgumentException("El precio de venta debe ser mayor al de compra");
         }
         Producto producto = convertirAEntidad(dto);
         producto.setFechaActualizacion(LocalDateTime.now());
+        if (comercioId != null) {
+            comercioRepository.findById(comercioId.longValue()).ifPresent(producto::setComercio);
+        }
         Producto guardado = productoRepository.save(producto);
         return convertirADTO(guardado);
     }
 
-    // Listar todos los productos
-    public List<ProductoDTO> listarProductos() {
-        return productoRepository.findAll()
-                .stream()
-                .map(this::convertirADTO)
-                .collect(Collectors.toList());
+    // Listar todos los productos (opcionalmente filtrados por comercio)
+    public List<ProductoDTO> listarProductos(Integer comercioId) {
+        List<Producto> productos = (comercioId != null)
+                ? productoRepository.findByComercioId(comercioId.longValue())
+                : productoRepository.findAll();
+        return productos.stream().map(this::convertirADTO).collect(Collectors.toList());
     }
 
     // Obtener producto por ID
@@ -97,6 +104,7 @@ public class ProductoService {
         producto.setStockMinimo(dto.getStockMinimo());
         producto.setProveedor(dto.getProveedor());
         producto.setDescripcion(dto.getDescripcion());
+        producto.setImagenUrl(dto.getImagenUrl());
         producto.setFechaActualizacion(LocalDateTime.now());
         producto.setUsuarioActualizacion(dto.getUsuarioActualizacion());
 

@@ -3,6 +3,7 @@ package com.comerciosconecta.backend.repository;
 import com.comerciosconecta.backend.entity.Producto;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -20,5 +21,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     // Verificar si existe un producto por referencia
     boolean existsByReferencia(String referencia);
+
+    // Buscar productos por comercio
+    List<Producto> findByComercioId(Long comercioId);
 }
 

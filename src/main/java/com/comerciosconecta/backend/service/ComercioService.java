@@ -31,5 +31,38 @@ public class ComercioService {
     public List<Comercio> listarComercios() {
         return comercioRepository.findAll();
     }
+
+    public Comercio obtenerApariencia(Long id) {
+        return comercioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comercio no encontrado"));
+    }
+
+    public Comercio actualizarApariencia(Long id, Comercio datos) {
+        Comercio comercio = comercioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comercio no encontrado"));
+
+        if (datos.getNombre()        != null) comercio.setNombre(datos.getNombre());
+        if (datos.getTagline()       != null) comercio.setTagline(datos.getTagline());
+        if (datos.getLogoUrl()       != null) comercio.setLogoUrl(datos.getLogoUrl());
+        if (datos.getColorPrimario() != null) comercio.setColorPrimario(datos.getColorPrimario());
+        if (datos.getColorAcento()   != null) comercio.setColorAcento(datos.getColorAcento());
+        if (datos.getHeroTitle()     != null) comercio.setHeroTitle(datos.getHeroTitle());
+        if (datos.getHeroSubtitle()  != null) comercio.setHeroSubtitle(datos.getHeroSubtitle());
+        if (datos.getHeroCta()       != null) comercio.setHeroCta(datos.getHeroCta());
+        if (datos.getCategorias()    != null) comercio.setCategorias(datos.getCategorias());
+        if (datos.getFooterTexto()   != null) comercio.setFooterTexto(datos.getFooterTexto());
+        if (datos.getFooterTelefono()!= null) comercio.setFooterTelefono(datos.getFooterTelefono());
+        if (datos.getFontFamily()    != null) comercio.setFontFamily(datos.getFontFamily());
+        if (datos.getButtonRadius()  != null) comercio.setButtonRadius(datos.getButtonRadius());
+        if (datos.getCardRadius()    != null) comercio.setCardRadius(datos.getCardRadius());
+        if (datos.getCustomCss()     != null) comercio.setCustomCss(datos.getCustomCss());
+        if (datos.getFacebook()      != null) comercio.setFacebook(datos.getFacebook());
+        if (datos.getInstagram()     != null) comercio.setInstagram(datos.getInstagram());
+        if (datos.getTwitter()       != null) comercio.setTwitter(datos.getTwitter());
+        if (datos.getTiktok()        != null) comercio.setTiktok(datos.getTiktok());
+        if (datos.getWhatsapp()      != null) comercio.setWhatsapp(datos.getWhatsapp());
+
+        return comercioRepository.save(comercio);
+    }
 }
 

@@ -47,8 +47,10 @@ public class ProductoDTO {
 
     private String proveedor;
     private String descripcion;
+    private String imagenUrl;
     private LocalDateTime fechaActualizacion;
     private String usuarioActualizacion;
+    private Integer comercioId;
 
     public ProductoDTO() {}
 
@@ -67,8 +69,10 @@ public class ProductoDTO {
         this.stockMinimo = producto.getStockMinimo();
         this.proveedor = producto.getProveedor();
         this.descripcion = producto.getDescripcion();
+        this.imagenUrl = producto.getImagenUrl();
         this.fechaActualizacion = producto.getFechaActualizacion();
         this.usuarioActualizacion = producto.getUsuarioActualizacion();
+        this.comercioId = producto.getComercio() != null ? producto.getComercio().getId() : null;
     }
 
     // ===== Getters y Setters =====
@@ -185,6 +189,14 @@ public class ProductoDTO {
         this.descripcion = descripcion;
     }
 
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
+    }
+
     public LocalDateTime getFechaActualizacion() {
         return fechaActualizacion;
     }
@@ -199,5 +211,13 @@ public class ProductoDTO {
 
     public void setUsuarioActualizacion(String usuarioActualizacion) {
         this.usuarioActualizacion = usuarioActualizacion;
+    }
+
+    public Integer getComercioId() {
+        return comercioId;
+    }
+
+    public void setComercioId(Integer comercioId) {
+        this.comercioId = comercioId;
     }
 }

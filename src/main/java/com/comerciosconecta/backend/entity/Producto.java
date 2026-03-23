@@ -11,6 +11,10 @@ public class Producto {
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CompraItem> compraItems;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comercio_id")
+    private Comercio comercio;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -50,6 +54,9 @@ public class Producto {
 
     @Column(columnDefinition = "TEXT")
     private String descripcion;
+
+    @Column(name = "imagen_url", columnDefinition = "TEXT")
+    private String imagenUrl;
 
     private LocalDateTime fechaActualizacion;
 
@@ -98,6 +105,9 @@ public class Producto {
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+
     public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
 
@@ -106,4 +116,7 @@ public class Producto {
 
     public List<CompraItem> getCompraItems() { return compraItems; }
     public void setCompraItems(List<CompraItem> compraItems) { this.compraItems = compraItems; }
+
+    public Comercio getComercio() { return comercio; }
+    public void setComercio(Comercio comercio) { this.comercio = comercio; }
 }

@@ -32,4 +32,22 @@ public class ComercioController {
     public ResponseEntity<List<Comercio>> listarComercios() {
         return ResponseEntity.ok(comercioService.listarComercios());
     }
+
+    @GetMapping("/{id}/apariencia")
+    public ResponseEntity<?> obtenerApariencia(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(comercioService.obtenerApariencia(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}/apariencia")
+    public ResponseEntity<?> actualizarApariencia(@PathVariable Long id, @RequestBody Comercio apariencia) {
+        try {
+            return ResponseEntity.ok(comercioService.actualizarApariencia(id, apariencia));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
 }
