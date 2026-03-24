@@ -8,49 +8,32 @@ public class CreateOrderRequest {
     private String customerName;
     private String customerEmail;
     private String customerPhone;
+    private String customerAddress;
+    private String customerCity;
     private Long totalInCents;
     private List<Item> items;
 
     // Getters y Setters
-    public String getCustomerName() {
-        return customerName;
-    }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
 
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
 
-    public String getCustomerEmail() {
-        return customerEmail;
-    }
+    public String getCustomerPhone() { return customerPhone; }
+    public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
 
-    public void setCustomerEmail(String customerEmail) {
-        this.customerEmail = customerEmail;
-    }
+    public String getCustomerAddress() { return customerAddress; }
+    public void setCustomerAddress(String customerAddress) { this.customerAddress = customerAddress; }
 
-    public String getCustomerPhone() {
-        return customerPhone;
-    }
+    public String getCustomerCity() { return customerCity; }
+    public void setCustomerCity(String customerCity) { this.customerCity = customerCity; }
 
-    public void setCustomerPhone(String customerPhone) {
-        this.customerPhone = customerPhone;
-    }
+    public Long getTotalInCents() { return totalInCents; }
+    public void setTotalInCents(Long totalInCents) { this.totalInCents = totalInCents; }
 
-    public Long getTotalInCents() {
-        return totalInCents;
-    }
-
-    public void setTotalInCents(Long totalInCents) {
-        this.totalInCents = totalInCents;
-    }
-
-    public List<Item> getItems() {
-        return items;
-    }
-
-    public void setItems(List<Item> items) {
-        this.items = items;
-    }
+    public List<Item> getItems() { return items; }
+    public void setItems(List<Item> items) { this.items = items; }
 
     // Clase interna Item
     public static class Item {

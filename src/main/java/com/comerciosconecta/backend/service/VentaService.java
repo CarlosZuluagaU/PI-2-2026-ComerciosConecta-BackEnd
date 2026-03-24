@@ -184,7 +184,9 @@ public class VentaService {
             record.setRawResponse(resp != null ? resp.toString() : "NULL RESPONSE");
         }
 
-        if (resp != null && "OK".equalsIgnoreCase(resp.getStatus())) {
+        if (resp != null && (
+                "OK".equalsIgnoreCase(resp.getStatus()) ||
+                "Created".equalsIgnoreCase(resp.getStatus()))) {
             record.setStatus("INVOICED");
             venta.setEstado("INVOICED");
 

@@ -158,10 +158,15 @@ public class VentaController {
                         .body("Esta venta ya fue facturada. Número: " + existing.getNumber());
             }
 
-            // Validar estado de la venta
-            if (!"CREATED".equals(venta.getEstado())) {
+            // Validar estado de la venta (permite CREATED y ERROR — ERROR puede ser un falso negativo de Factus)
+            if (!"CREATED".equals(venta.getEstado()) && !"ERROR".equals(venta.getEstado())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("La venta no puede ser facturada porque su estado es: " + venta.getEstado());
+            }
+            // Si el estado era ERROR, resetear a CREATED para poder re-facturar
+            if ("ERROR".equals(venta.getEstado())) {
+                venta.setEstado("CREATED");
+                ventaRepository.save(venta);
             }
 
             // Validar que tenga items

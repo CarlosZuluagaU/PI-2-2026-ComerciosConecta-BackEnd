@@ -84,6 +84,8 @@ public class CheckoutController {
                 req.getCustomerName(),
                 req.getCustomerEmail(),
                 req.getCustomerPhone(),
+                req.getCustomerAddress(),
+                req.getCustomerCity(),
                 items,
                 req.getTotalInCents()
         );
@@ -139,7 +141,120 @@ public class CheckoutController {
         return ResponseEntity.ok(Map.of("payment_url", paymentUrl));
     }
 
-    // 3) Obtener todas las órdenes
+    // 3) Iniciar pago SIN crear orden (orden se crea solo si Wompi aprueba)
+    @PostMapping("/initiate-payment")
+    public ResponseEntity<Map<String, Object>> initiatePayment(@RequestBody Map<String, Object> body) {
+        try {
+            String reference = java.util.UUID.randomUUID().toString();
+            Long totalInCents = Long.valueOf(body.get("totalInCents").toString());
+
+            String url = "https://sandbox.wompi.co/v1/payment_links";
+            Map<String, Object> wompiBody = new HashMap<>();
+            wompiBody.put("name", "Compra en Comercios Conecta");
+            wompiBody.put("description", "Compra de productos");
+            wompiBody.put("single_use", true);
+            wompiBody.put("collect_shipping", false);
+            wompiBody.put("currency", "COP");
+            wompiBody.put("amount_in_cents", totalInCents);
+            wompiBody.put("redirect_url", "http://localhost:3000/store/order-confirmation");
+            wompiBody.put("reference", reference);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(wompiPrivateKey);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(wompiBody, headers);
+            ResponseEntity<Map> resp = restTemplate.postForEntity(url, entity, Map.class);
+
+            Map data = (Map) resp.getBody().get("data");
+            String linkId = (String) data.get("id");
+            String paymentUrl = "https://checkout.wompi.co/l/" + linkId;
+
+            return ResponseEntity.ok(Map.of("payment_url", paymentUrl, "reference", reference));
+        } catch (Exception e) {
+            logger.error("Error iniciando pago", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 3b) Confirmar orden DESPUÉS de pago aprobado por Wompi
+    @PostMapping("/confirm-order")
+    public ResponseEntity<Map<String, Object>> confirmOrder(@RequestBody CreateOrderRequest req) {
+        try {
+            List<OrderItem> items = new ArrayList<>();
+            for (CreateOrderRequest.Item i : req.getItems()) {
+                OrderItem it = new OrderItem();
+                it.setProductoId(i.getProductoId());
+                it.setNombre(i.getNombre());
+                it.setCantidad(i.getCantidad());
+                it.setPriceInCents(i.getPriceInCents());
+                it.setIvaPercentage(i.getIvaPercentage());
+                it.setSubtotalInCents(i.getSubtotalInCents());
+                items.add(it);
+            }
+
+            Order order = checkoutService.createOrder(
+                    req.getCustomerName(), req.getCustomerEmail(), req.getCustomerPhone(),
+                    req.getCustomerAddress(), req.getCustomerCity(), items, req.getTotalInCents()
+            );
+            // Marcar como PAID inmediatamente
+            order.setStatus("PAID");
+            orderRepository.save(order);
+
+            return ResponseEntity.ok(Map.of(
+                    "orderId", order.getId(),
+                    "orderNumber", "ORD-" + String.format("%05d", order.getId()),
+                    "status", "PAID"
+            ));
+        } catch (Exception e) {
+            logger.error("Error confirmando orden", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 4) Enviar orden → marca PROCESSING y crea Venta
+    @PutMapping("/orders/{orderId}/ship")
+    public ResponseEntity<Map<String, Object>> shipOrder(@PathVariable Long orderId) {
+        try {
+            com.comerciosconecta.backend.entity.Venta venta = checkoutService.shipOrder(orderId);
+            return ResponseEntity.ok(Map.of(
+                "message", "Pedido enviado correctamente",
+                "ventaId", venta.getId(),
+                "orderId", orderId
+            ));
+        } catch (Exception e) {
+            logger.error("Error enviando orden {}", orderId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 4) Cambiar estado de orden manualmente (para pruebas / admin)
+    @PutMapping("/orders/{orderId}/status")
+    public ResponseEntity<Map<String, Object>> updateOrderStatus(
+            @PathVariable Long orderId,
+            @RequestBody Map<String, String> body) {
+        try {
+            String newStatus = body.get("status");
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + orderId));
+            order.setStatus(newStatus);
+            orderRepository.save(order);
+            return ResponseEntity.ok(Map.of(
+                "message", "Estado actualizado",
+                "orderId", orderId,
+                "status", newStatus
+            ));
+        } catch (Exception e) {
+            logger.error("Error actualizando estado de orden {}", orderId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 5) Obtener todas las órdenes
     @GetMapping("/all-orders")
     public ResponseEntity<List<Map<String, Object>>> getAllOrdersSimple() {
         try {

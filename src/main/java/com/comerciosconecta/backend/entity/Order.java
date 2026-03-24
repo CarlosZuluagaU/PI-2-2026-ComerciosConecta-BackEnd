@@ -20,6 +20,8 @@ public class Order {
     private String customerName;
     private String customerEmail;
     private String customerPhone;
+    private String customerAddress;
+    private String customerCity;
 
     private Long totalInCents;
     private String currency;
@@ -93,6 +95,12 @@ public class Order {
     public void setCustomerPhone(String customerPhone) {
         this.customerPhone = customerPhone;
     }
+
+    public String getCustomerAddress() { return customerAddress; }
+    public void setCustomerAddress(String customerAddress) { this.customerAddress = customerAddress; }
+
+    public String getCustomerCity() { return customerCity; }
+    public void setCustomerCity(String customerCity) { this.customerCity = customerCity; }
 
     public Long getTotalInCents() {
         return totalInCents;
