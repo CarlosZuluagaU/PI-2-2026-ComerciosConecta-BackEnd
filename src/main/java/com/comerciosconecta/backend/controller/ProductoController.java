@@ -98,6 +98,12 @@ public class ProductoController {
         }
     }
 
+    // Productos con stock bajo (stock <= stockMinimo)
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<ProductoDTO>> getLowStock() {
+        return ResponseEntity.ok(productoService.getLowStockProductos());
+    }
+
     // Eliminar producto
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {

@@ -110,6 +110,25 @@ public class CheckoutService {
         }
     }
 
+    /** Descuenta stock y devuelve los productos que quedaron en mínimo o menos */
+    @Transactional
+    public List<Producto> decreaseStockForOrder(Order order) {
+        List<Producto> lowStock = new ArrayList<>();
+        for (OrderItem item : order.getItems()) {
+            Long productoId = item.getProductoId();
+            if (productoId == null) continue;
+            Producto p = productoRepository.findById(productoId).orElse(null);
+            if (p == null) continue;
+            int newStock = Math.max(p.getStock() - item.getCantidad(), 0);
+            p.setStock(newStock);
+            productoRepository.save(p);
+            if (newStock <= p.getStockMinimo()) {
+                lowStock.add(p);
+            }
+        }
+        return lowStock;
+    }
+
     public void markOrderFailed(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
         order.setStatus("FAILED");

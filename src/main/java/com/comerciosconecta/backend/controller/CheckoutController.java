@@ -198,15 +198,28 @@ public class CheckoutController {
                     req.getCustomerName(), req.getCustomerEmail(), req.getCustomerPhone(),
                     req.getCustomerAddress(), req.getCustomerCity(), items, req.getTotalInCents()
             );
-            // Marcar como PAID inmediatamente
+            // Marcar como PAID y descontar stock
             order.setStatus("PAID");
             orderRepository.save(order);
+            List<com.comerciosconecta.backend.entity.Producto> lowStock =
+                    checkoutService.decreaseStockForOrder(order);
 
-            return ResponseEntity.ok(Map.of(
-                    "orderId", order.getId(),
-                    "orderNumber", "ORD-" + String.format("%05d", order.getId()),
-                    "status", "PAID"
-            ));
+            List<Map<String, Object>> lowStockAlerts = lowStock.stream().map(p -> {
+                Map<String, Object> a = new java.util.HashMap<>();
+                a.put("productoId", p.getId());
+                a.put("nombre", p.getNombre());
+                a.put("stock", p.getStock());
+                a.put("stockMinimo", p.getStockMinimo());
+                a.put("proveedor", p.getProveedor());
+                return a;
+            }).toList();
+
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("orderId", order.getId());
+            resp.put("orderNumber", "ORD-" + String.format("%05d", order.getId()));
+            resp.put("status", "PAID");
+            resp.put("lowStockAlerts", lowStockAlerts);
+            return ResponseEntity.ok(resp);
         } catch (Exception e) {
             logger.error("Error confirmando orden", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

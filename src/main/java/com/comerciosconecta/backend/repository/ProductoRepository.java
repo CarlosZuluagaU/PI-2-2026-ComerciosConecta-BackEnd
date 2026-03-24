@@ -24,5 +24,9 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     // Buscar productos por comercio
     List<Producto> findByComercioId(Long comercioId);
+
+    // Productos con stock <= stockMinimo (alerta de reorden)
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM Producto p WHERE p.stock <= p.stockMinimo")
+    List<Producto> findLowStockProductos();
 }
 

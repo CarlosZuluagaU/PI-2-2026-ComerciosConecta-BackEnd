@@ -119,4 +119,10 @@ public class ProductoService {
         }
         productoRepository.deleteById(id);
     }
+
+    public List<ProductoDTO> getLowStockProductos() {
+        return productoRepository.findLowStockProductos().stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
 }
