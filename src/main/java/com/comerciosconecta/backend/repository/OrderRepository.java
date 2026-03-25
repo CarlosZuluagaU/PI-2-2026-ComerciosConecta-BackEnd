@@ -11,4 +11,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findAllByOrderByCreatedAtDesc();
     List<Order> findByComercioIdOrderByCreatedAtDesc(Integer comercioId);
+    long countByComercioId(Integer comercioId);
 }

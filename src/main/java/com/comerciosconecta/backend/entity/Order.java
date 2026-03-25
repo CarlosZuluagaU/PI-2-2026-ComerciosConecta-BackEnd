@@ -30,6 +30,9 @@ public class Order {
     @Column(name = "comercio_id")
     private Integer comercioId;
 
+    @Column(name = "comercio_order_number")
+    private Integer comercioOrderNumber;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -131,6 +134,9 @@ public class Order {
 
     public Integer getComercioId() { return comercioId; }
     public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
+
+    public Integer getComercioOrderNumber() { return comercioOrderNumber; }
+    public void setComercioOrderNumber(Integer comercioOrderNumber) { this.comercioOrderNumber = comercioOrderNumber; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

@@ -157,6 +157,9 @@ public class CheckoutController {
         try {
             String reference = java.util.UUID.randomUUID().toString();
             Long totalInCents = Long.valueOf(body.get("totalInCents").toString());
+            String redirectUrl = body.get("redirectUrl") != null
+                    ? body.get("redirectUrl").toString()
+                    : "http://localhost:3000/store/order-confirmation";
 
             String url = "https://sandbox.wompi.co/v1/payment_links";
             Map<String, Object> wompiBody = new HashMap<>();
@@ -166,7 +169,7 @@ public class CheckoutController {
             wompiBody.put("collect_shipping", false);
             wompiBody.put("currency", "COP");
             wompiBody.put("amount_in_cents", totalInCents);
-            wompiBody.put("redirect_url", "http://localhost:3000/store/order-confirmation");
+            wompiBody.put("redirect_url", redirectUrl);
             wompiBody.put("reference", reference);
 
             HttpHeaders headers = new HttpHeaders();
@@ -226,8 +229,9 @@ public class CheckoutController {
             }).toList();
 
             Map<String, Object> resp = new java.util.HashMap<>();
+            int num = order.getComercioOrderNumber() != null ? order.getComercioOrderNumber() : order.getId().intValue();
             resp.put("orderId", order.getId());
-            resp.put("orderNumber", "ORD-" + String.format("%05d", order.getId()));
+            resp.put("orderNumber", "ORD-" + String.format("%05d", num));
             resp.put("status", "PAID");
             resp.put("lowStockAlerts", lowStockAlerts);
             return ResponseEntity.ok(resp);
@@ -324,7 +328,9 @@ public class CheckoutController {
             List<Map<String, Object>> response = new ArrayList<>();
             for (Order order : orders) {
                 Map<String, Object> orderMap = new HashMap<>();
+                int num = order.getComercioOrderNumber() != null ? order.getComercioOrderNumber() : order.getId().intValue();
                 orderMap.put("id", order.getId());
+                orderMap.put("comercioOrderNumber", num);
                 orderMap.put("uuid", order.getUuid());
                 orderMap.put("customerName", order.getCustomerName());
                 orderMap.put("customerEmail", order.getCustomerEmail());

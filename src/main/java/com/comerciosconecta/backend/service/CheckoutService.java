@@ -49,6 +49,8 @@ public class CheckoutService {
         o.setCurrency("COP");
         o.setStatus("CREATED");
         o.setComercioId(comercioId);
+        long count = comercioId != null ? orderRepository.countByComercioId(comercioId) : orderRepository.count();
+        o.setComercioOrderNumber((int) count + 1);
         o.setCreatedAt(LocalDateTime.now());
         o.setUpdatedAt(LocalDateTime.now());
 
