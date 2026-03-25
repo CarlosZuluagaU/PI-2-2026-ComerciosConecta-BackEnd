@@ -107,6 +107,15 @@ public class Comercio {
     @Column(name = "whatsapp")
     private String whatsapp;
 
+    @Column(name = "color_nombre")
+    private String colorNombre = "#ffffff";
+
+    @Column(name = "color_tagline")
+    private String colorTagline = "rgba(255,255,255,0.6)";
+
+    @Column(name = "layout")
+    private String layout = "clasico";
+
     public Comercio() {}
 
     public Comercio(String nombre, String nit, String direccion, String telefono, String email) {
@@ -224,4 +233,13 @@ public class Comercio {
 
     public String getColorIconosSociales() { return colorIconosSociales; }
     public void setColorIconosSociales(String colorIconosSociales) { this.colorIconosSociales = colorIconosSociales; }
+
+    public String getColorNombre() { return colorNombre; }
+    public void setColorNombre(String colorNombre) { this.colorNombre = colorNombre; }
+
+    public String getColorTagline() { return colorTagline; }
+    public void setColorTagline(String colorTagline) { this.colorTagline = colorTagline; }
+
+    public String getLayout() { return layout; }
+    public void setLayout(String layout) { this.layout = layout; }
 }
