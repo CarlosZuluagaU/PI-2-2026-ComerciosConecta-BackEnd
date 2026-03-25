@@ -27,6 +27,36 @@ public class Comercio {
     @Column(name = "color_acento")
     private String colorAcento = "#00d4aa";
 
+    @Column(name = "color_texto")
+    private String colorTexto = "#1F3B4D";
+
+    @Column(name = "color_texto_secundario")
+    private String colorTextoSecundario = "#666666";
+
+    @Column(name = "color_texto_boton")
+    private String colorTextoBoton = "#ffffff";
+
+    @Column(name = "color_boton")
+    private String colorBoton = "#1F3B4D";
+
+    @Column(name = "color_boton_cta")
+    private String colorBotonCta = "#00d4aa";
+
+    @Column(name = "color_carrito_boton")
+    private String colorCarritoBoton = "#00d4aa";
+
+    @Column(name = "color_banner")
+    private String colorBanner = "#1F3B4D";
+
+    @Column(name = "color_banner_secundario")
+    private String colorBannerSecundario = "#00d4aa";
+
+    @Column(name = "color_footer_texto")
+    private String colorFooterTexto = "#ffffff";
+
+    @Column(name = "color_iconos_sociales")
+    private String colorIconosSociales = "#ffffff";
+
     private String tagline;
 
     @Column(name = "logo_url", columnDefinition = "TEXT")
@@ -164,4 +194,34 @@ public class Comercio {
 
     public String getWhatsapp()  { return whatsapp; }
     public void setWhatsapp(String whatsapp)   { this.whatsapp = whatsapp; }
+
+    public String getColorTexto() { return colorTexto; }
+    public void setColorTexto(String colorTexto) { this.colorTexto = colorTexto; }
+
+    public String getColorTextoSecundario() { return colorTextoSecundario; }
+    public void setColorTextoSecundario(String colorTextoSecundario) { this.colorTextoSecundario = colorTextoSecundario; }
+
+    public String getColorTextoBoton() { return colorTextoBoton; }
+    public void setColorTextoBoton(String colorTextoBoton) { this.colorTextoBoton = colorTextoBoton; }
+
+    public String getColorBoton() { return colorBoton; }
+    public void setColorBoton(String colorBoton) { this.colorBoton = colorBoton; }
+
+    public String getColorBotonCta() { return colorBotonCta; }
+    public void setColorBotonCta(String colorBotonCta) { this.colorBotonCta = colorBotonCta; }
+
+    public String getColorCarritoBoton() { return colorCarritoBoton; }
+    public void setColorCarritoBoton(String colorCarritoBoton) { this.colorCarritoBoton = colorCarritoBoton; }
+
+    public String getColorBanner() { return colorBanner; }
+    public void setColorBanner(String colorBanner) { this.colorBanner = colorBanner; }
+
+    public String getColorBannerSecundario() { return colorBannerSecundario; }
+    public void setColorBannerSecundario(String colorBannerSecundario) { this.colorBannerSecundario = colorBannerSecundario; }
+
+    public String getColorFooterTexto() { return colorFooterTexto; }
+    public void setColorFooterTexto(String colorFooterTexto) { this.colorFooterTexto = colorFooterTexto; }
+
+    public String getColorIconosSociales() { return colorIconosSociales; }
+    public void setColorIconosSociales(String colorIconosSociales) { this.colorIconosSociales = colorIconosSociales; }
 }

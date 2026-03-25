@@ -60,7 +60,17 @@ public class ComercioService {
         if (datos.getInstagram()     != null) comercio.setInstagram(datos.getInstagram());
         if (datos.getTwitter()       != null) comercio.setTwitter(datos.getTwitter());
         if (datos.getTiktok()        != null) comercio.setTiktok(datos.getTiktok());
-        if (datos.getWhatsapp()      != null) comercio.setWhatsapp(datos.getWhatsapp());
+        if (datos.getWhatsapp()               != null) comercio.setWhatsapp(datos.getWhatsapp());
+        if (datos.getColorTexto()             != null) comercio.setColorTexto(datos.getColorTexto());
+        if (datos.getColorTextoSecundario()   != null) comercio.setColorTextoSecundario(datos.getColorTextoSecundario());
+        if (datos.getColorTextoBoton()        != null) comercio.setColorTextoBoton(datos.getColorTextoBoton());
+        if (datos.getColorBoton()             != null) comercio.setColorBoton(datos.getColorBoton());
+        if (datos.getColorBotonCta()          != null) comercio.setColorBotonCta(datos.getColorBotonCta());
+        if (datos.getColorCarritoBoton()      != null) comercio.setColorCarritoBoton(datos.getColorCarritoBoton());
+        if (datos.getColorBanner()            != null) comercio.setColorBanner(datos.getColorBanner());
+        if (datos.getColorBannerSecundario()  != null) comercio.setColorBannerSecundario(datos.getColorBannerSecundario());
+        if (datos.getColorFooterTexto()       != null) comercio.setColorFooterTexto(datos.getColorFooterTexto());
+        if (datos.getColorIconosSociales()    != null) comercio.setColorIconosSociales(datos.getColorIconosSociales());
 
         return comercioRepository.save(comercio);
     }
