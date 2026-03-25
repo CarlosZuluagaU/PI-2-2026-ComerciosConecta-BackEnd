@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:8080/api/productos)",
+      "Bash(curl -s \"http://localhost:8080/api/productos?comercioId=999\")",
+      "Bash(powershell -Command \"Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8080 -State Listen\\).OwningProcess | Select-Object Id, ProcessName | Format-Table\")",
+      "Bash(powershell -Command \"Stop-Process -Id 3232 -Force\")",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 21248 /F)",
+      "Bash(taskkill /PID 23832 /F)",
+      "Bash(cmd //c \"docker ps\")",
+      "Bash(cmd //c \"taskkill /PID 15492 /F\")"
+    ]
+  }
+}

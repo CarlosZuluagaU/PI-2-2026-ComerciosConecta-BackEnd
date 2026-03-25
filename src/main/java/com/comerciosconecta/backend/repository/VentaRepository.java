@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface VentaRepository extends JpaRepository<Venta, Long> {
     Optional<Venta> findByUuid(String uuid);
+    Optional<Venta> findByReferencia(String referencia);
 }

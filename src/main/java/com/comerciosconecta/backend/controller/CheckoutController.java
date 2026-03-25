@@ -19,6 +19,10 @@ import org.slf4j.LoggerFactory;
 
 
 import com.comerciosconecta.backend.dto.CreateOrderRequest;
+import com.comerciosconecta.backend.entity.Venta;
+import com.comerciosconecta.backend.entity.InvoiceRecord;
+import com.comerciosconecta.backend.repository.VentaRepository;
+import com.comerciosconecta.backend.service.VentaService;
 
 @RestController
 @RequestMapping("/api/checkout")
@@ -26,7 +30,9 @@ public class CheckoutController {
 
     private final CheckoutService checkoutService;
     private final RestTemplate restTemplate;
-    private final OrderRepository orderRepository; // AGREGADO
+    private final OrderRepository orderRepository;
+    private final VentaRepository ventaRepository;
+    private final VentaService ventaService;
 
     private static final Logger logger = LoggerFactory.getLogger(CheckoutController.class);
 
@@ -36,14 +42,17 @@ public class CheckoutController {
     @Value("${wompi.public-key}")
     private String wompiPublicKey;
 
-    // Constructor actualizado con OrderRepository
     public CheckoutController(
             CheckoutService checkoutService,
             RestTemplate restTemplate,
-            OrderRepository orderRepository) { // AGREGADO
+            OrderRepository orderRepository,
+            VentaRepository ventaRepository,
+            VentaService ventaService) {
         this.checkoutService = checkoutService;
         this.restTemplate = restTemplate;
-        this.orderRepository = orderRepository; // INICIALIZADO
+        this.orderRepository = orderRepository;
+        this.ventaRepository = ventaRepository;
+        this.ventaService = ventaService;
     }
 
     // 🔹 Método para generar la firma de integridad
@@ -267,7 +276,41 @@ public class CheckoutController {
         }
     }
 
-    // 5) Obtener todas las órdenes
+    // 5) Facturar orden: ship (si no lo está) y luego invoicing Factus
+    @PostMapping("/orders/{orderId}/facturar")
+    public ResponseEntity<Map<String, Object>> facturarOrden(@PathVariable Long orderId) {
+        try {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + orderId));
+
+            // Si está en PAID, primero la enviamos (crea Venta)
+            Venta venta;
+            if ("PAID".equalsIgnoreCase(order.getStatus()) || "CREATED".equalsIgnoreCase(order.getStatus())) {
+                venta = checkoutService.shipOrder(orderId);
+            } else {
+                // Ya estaba enviada — buscar la Venta por referencia (uuid de la orden)
+                venta = ventaRepository.findByReferencia(order.getUuid())
+                        .orElseThrow(() -> new RuntimeException("No se encontró venta para la orden " + orderId));
+            }
+
+            // Facturar
+            InvoiceRecord rec = ventaService.facturarVenta(venta.getId());
+
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("orderId", orderId);
+            resp.put("ventaId", venta.getId());
+            resp.put("invoiceId", rec.getId());
+            resp.put("factusNumber", rec.getNumber());
+            resp.put("status", rec.getStatus());
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            logger.error("Error facturando orden {}", orderId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Error al facturar"));
+        }
+    }
+
+    // 6) Obtener todas las órdenes
     @GetMapping("/all-orders")
     public ResponseEntity<List<Map<String, Object>>> getAllOrdersSimple() {
         try {
