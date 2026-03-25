@@ -37,7 +37,7 @@ public class CheckoutService {
     @Transactional
     public Order createOrder(String customerName, String customerEmail, String customerPhone,
                              String customerAddress, String customerCity,
-                             List<OrderItem> items, Long totalInCents) {
+                             List<OrderItem> items, Long totalInCents, Integer comercioId) {
         Order o = new Order();
         o.setUuid(UUID.randomUUID().toString());
         o.setCustomerName(customerName);
@@ -48,6 +48,7 @@ public class CheckoutService {
         o.setTotalInCents(totalInCents);
         o.setCurrency("COP");
         o.setStatus("CREATED");
+        o.setComercioId(comercioId);
         o.setCreatedAt(LocalDateTime.now());
         o.setUpdatedAt(LocalDateTime.now());
 
@@ -57,13 +58,16 @@ public class CheckoutService {
         o.setItems(items);
         Order saved = orderRepository.save(o);
 
-        // Registrar cliente automáticamente si no existe (por email)
+        // Registrar cliente automáticamente si no existe para este comercio
         try {
             if (customerEmail != null && !customerEmail.isBlank()) {
-                boolean exists = clienteRepository.findByCorreo(customerEmail).isPresent();
+                boolean exists = comercioId != null
+                    ? clienteRepository.findByCorreoAndComercioId(customerEmail, comercioId).isPresent()
+                    : clienteRepository.findByCorreo(customerEmail).isPresent();
                 if (!exists) {
-                    // Usar email como documento único de tienda online
-                    boolean docExists = clienteRepository.findByNumeroDocumento(customerEmail).isPresent();
+                    boolean docExists = comercioId != null
+                        ? clienteRepository.findByNumeroDocumentoAndComercioId(customerEmail, comercioId).isPresent()
+                        : clienteRepository.findByNumeroDocumento(customerEmail).isPresent();
                     if (!docExists) {
                         Cliente cliente = new Cliente();
                         cliente.setTipoDocumento("CC");
@@ -76,6 +80,7 @@ public class CheckoutService {
                         cliente.setDireccion(customerAddress);
                         cliente.setCiudad(customerCity);
                         cliente.setEstado("Activo");
+                        cliente.setComercioId(comercioId);
                         clienteRepository.save(cliente);
                     }
                 }
@@ -148,6 +153,7 @@ public class CheckoutService {
 
         // Crear Venta a partir de la orden
         Venta venta = new Venta();
+        venta.setComercioId(order.getComercioId());
         venta.setNombreCliente(order.getCustomerName());
         venta.setEmailCliente(order.getCustomerEmail());
         venta.setTelefonoCliente(order.getCustomerPhone());

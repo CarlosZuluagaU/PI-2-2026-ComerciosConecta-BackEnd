@@ -19,6 +19,9 @@ public class Venta {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @Column(name = "comercio_id")
+    private Integer comercioId;
+
     // Campos necesarios para Factus
     private String nota;
     private String referencia; // Para reference_code
@@ -155,6 +158,9 @@ public class Venta {
         }
         this.items = items;
     }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
 
     // Métodos de utilidad
     @PrePersist

@@ -1,6 +1,7 @@
 package com.comerciosconecta.backend.controller;
 
 import com.comerciosconecta.backend.entity.Cliente;
+import com.comerciosconecta.backend.repository.ClienteRepository;
 import com.comerciosconecta.backend.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,13 @@ public class ClienteController {
     @Autowired
     private ClienteService clienteService;
 
+    @Autowired
+    private ClienteRepository clienteRepository;
+
     @PostMapping
-    public ResponseEntity<?> registrarCliente(@RequestBody Cliente cliente) {
+    public ResponseEntity<?> registrarCliente(@RequestBody Cliente cliente,
+                                              @RequestParam(required = false) Integer comercioId) {
+        if (comercioId != null) cliente.setComercioId(comercioId);
         try {
             Cliente nuevo = clienteService.registrarCliente(cliente);
             return ResponseEntity.ok(nuevo);
@@ -29,7 +35,8 @@ public class ClienteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Cliente>> listarClientes() {
+    public ResponseEntity<List<Cliente>> listarClientes(@RequestParam(required = false) Integer comercioId) {
+        if (comercioId != null) return ResponseEntity.ok(clienteRepository.findByComercioId(comercioId));
         return ResponseEntity.ok(clienteService.listarClientes());
     }
 

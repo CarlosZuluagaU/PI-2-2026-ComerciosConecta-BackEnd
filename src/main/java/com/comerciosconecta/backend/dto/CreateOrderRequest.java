@@ -11,6 +11,7 @@ public class CreateOrderRequest {
     private String customerAddress;
     private String customerCity;
     private Long totalInCents;
+    private Integer comercioId;
     private List<Item> items;
 
     // Getters y Setters
@@ -31,6 +32,9 @@ public class CreateOrderRequest {
 
     public Long getTotalInCents() { return totalInCents; }
     public void setTotalInCents(Long totalInCents) { this.totalInCents = totalInCents; }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
 
     public List<Item> getItems() { return items; }
     public void setItems(List<Item> items) { this.items = items; }

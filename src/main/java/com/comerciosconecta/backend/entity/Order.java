@@ -27,6 +27,9 @@ public class Order {
     private String currency;
     private String status; // CREATED, PENDING_PAYMENT, PAID, FAILED, CANCELLED
 
+    @Column(name = "comercio_id")
+    private Integer comercioId;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -125,6 +128,9 @@ public class Order {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

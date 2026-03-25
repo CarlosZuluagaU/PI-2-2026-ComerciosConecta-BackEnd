@@ -1,9 +1,11 @@
 package com.comerciosconecta.backend.service;
 
 import com.comerciosconecta.backend.dto.*;
+import com.comerciosconecta.backend.entity.Comercio;
 import com.comerciosconecta.backend.entity.InvoiceRecord;
 import com.comerciosconecta.backend.entity.Venta;
 import com.comerciosconecta.backend.entity.VentaItem;
+import com.comerciosconecta.backend.repository.ComercioRepository;
 import com.comerciosconecta.backend.repository.InvoiceRecordRepository;
 import com.comerciosconecta.backend.repository.VentaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,14 +23,17 @@ public class VentaService {
     private final VentaRepository ventaRepository;
     private final InvoiceRecordRepository invoiceRecordRepository;
     private final FactusClient factusClient;
+    private final ComercioRepository comercioRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public VentaService(VentaRepository ventaRepository,
                         InvoiceRecordRepository invoiceRecordRepository,
-                        FactusClient factusClient) {
+                        FactusClient factusClient,
+                        ComercioRepository comercioRepository) {
         this.ventaRepository = ventaRepository;
         this.invoiceRecordRepository = invoiceRecordRepository;
         this.factusClient = factusClient;
+        this.comercioRepository = comercioRepository;
     }
 
     // =========================================================================================
@@ -83,13 +88,29 @@ public class VentaService {
             throw new RuntimeException("numbering_range_id inválido desde Factus: " + numberingRangeIdStr);
         }
 
-        // ================= ESTABLISHMENT DTO =================
+        // ================= ESTABLISHMENT DTO (desde Comercio del usuario) =================
+        String estNombre   = "ComerciosConecta";
+        String estDir      = "calle 10 # 3-13";
+        String estTel      = "0987654321";
+        String estEmail    = "comerciosconecta@gmail.com";
+        Integer estMuniId  = 980;
+
+        if (venta.getComercioId() != null) {
+            comercioRepository.findById(Long.valueOf(venta.getComercioId())).ifPresent(c -> {
+                // los campos se setean en la venta para que el lambda pueda accederlos
+                if (c.getNombre()    != null) venta.setEstablecimientoNombre(c.getNombre());
+                if (c.getDireccion() != null) venta.setEstablecimientoDireccion(c.getDireccion());
+                if (c.getTelefono()  != null) venta.setEstablecimientoTelefono(c.getTelefono());
+                if (c.getEmail()     != null) venta.setEstablecimientoEmail(c.getEmail());
+            });
+        }
+
         FactusEstablishmentDto establishmentDto = new FactusEstablishmentDto(
-                "SuperMarket", // Nombre de tu establecimiento
-                "calle 10 # 3-13", // Dirección de tu establecimiento
-                "0987654321", // Teléfono
-                "supermarket@gmail.com", // Email
-                980 // municipality_id - ajustar según tu ubicación
+                venta.getEstablecimientoNombre()   != null ? venta.getEstablecimientoNombre()   : estNombre,
+                venta.getEstablecimientoDireccion()!= null ? venta.getEstablecimientoDireccion(): estDir,
+                venta.getEstablecimientoTelefono() != null ? venta.getEstablecimientoTelefono() : estTel,
+                venta.getEstablecimientoEmail()    != null ? venta.getEstablecimientoEmail()    : estEmail,
+                venta.getEstablecimientoMunicipioId() != null ? venta.getEstablecimientoMunicipioId() : estMuniId
         );
 
         // ================= CLIENTE DTO =================

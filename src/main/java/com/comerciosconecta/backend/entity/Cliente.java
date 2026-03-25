@@ -13,8 +13,11 @@ public class Cliente {
     @Column(nullable = false)
     private String tipoDocumento;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String numeroDocumento;
+
+    @Column(name = "comercio_id")
+    private Integer comercioId;
 
     @Column(nullable = false)
     private String nombres;
@@ -128,4 +131,7 @@ public class Cliente {
     public void setEstado(String estado) {
         this.estado = estado;
     }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
 }

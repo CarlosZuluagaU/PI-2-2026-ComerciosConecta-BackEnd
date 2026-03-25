@@ -35,8 +35,10 @@ public class VentaController {
     //                     CREAR VENTA LOCAL
     // ============================================================
     @PostMapping
-    public ResponseEntity<?> crearVenta(@RequestBody Venta venta) {
+    public ResponseEntity<?> crearVenta(@RequestBody Venta venta,
+                                        @RequestParam(required = false) Integer comercioId) {
         try {
+            if (comercioId != null) venta.setComercioId(comercioId);
             // Establecer dígito de verificación fijo como "1"
             venta.setDvCliente("1");
 
@@ -121,12 +123,14 @@ public class VentaController {
     }
 
     // ============================================================
-    //                     LISTAR TODAS LAS VENTAS
+    //                     LISTAR VENTAS (filtradas por comercioId)
     // ============================================================
     @GetMapping
-    public ResponseEntity<?> listarVentas() {
+    public ResponseEntity<?> listarVentas(@RequestParam(required = false) Integer comercioId) {
         try {
-            List<Venta> ventas = ventaRepository.findAll();
+            List<Venta> ventas = (comercioId != null)
+                    ? ventaRepository.findByComercioIdOrderByCreatedAtDesc(comercioId)
+                    : ventaRepository.findAll();
             List<VentaDTO> ventasDTO = ventas.stream()
                     .map(ventaService::mapToVentaDTO)
                     .collect(Collectors.toList());

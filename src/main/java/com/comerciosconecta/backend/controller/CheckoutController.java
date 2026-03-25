@@ -96,7 +96,8 @@ public class CheckoutController {
                 req.getCustomerAddress(),
                 req.getCustomerCity(),
                 items,
-                req.getTotalInCents()
+                req.getTotalInCents(),
+                req.getComercioId()
         );
 
         Map<String, Object> resp = Map.of(
@@ -205,7 +206,8 @@ public class CheckoutController {
 
             Order order = checkoutService.createOrder(
                     req.getCustomerName(), req.getCustomerEmail(), req.getCustomerPhone(),
-                    req.getCustomerAddress(), req.getCustomerCity(), items, req.getTotalInCents()
+                    req.getCustomerAddress(), req.getCustomerCity(), items, req.getTotalInCents(),
+                    req.getComercioId()
             );
             // Marcar como PAID y descontar stock
             order.setStatus("PAID");
@@ -310,11 +312,14 @@ public class CheckoutController {
         }
     }
 
-    // 6) Obtener todas las órdenes
+    // 6) Obtener todas las órdenes (filtradas por comercioId si se provee)
     @GetMapping("/all-orders")
-    public ResponseEntity<List<Map<String, Object>>> getAllOrdersSimple() {
+    public ResponseEntity<List<Map<String, Object>>> getAllOrdersSimple(
+            @RequestParam(required = false) Integer comercioId) {
         try {
-            List<Order> orders = orderRepository.findAllByOrderByCreatedAtDesc();
+            List<Order> orders = (comercioId != null)
+                    ? orderRepository.findByComercioIdOrderByCreatedAtDesc(comercioId)
+                    : orderRepository.findAllByOrderByCreatedAtDesc();
 
             List<Map<String, Object>> response = new ArrayList<>();
             for (Order order : orders) {
