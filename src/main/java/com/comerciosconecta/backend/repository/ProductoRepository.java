@@ -32,5 +32,9 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     // Categorías distintas por comercio
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT p.categoria FROM Producto p WHERE p.comercio.id = :comercioId AND p.categoria IS NOT NULL AND p.categoria <> ''")
     List<String> findDistinctCategoriasByComercioId(@org.springframework.data.repository.query.Param("comercioId") Long comercioId);
+
+    // Marcas distintas por comercio
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT p.marca FROM Producto p WHERE p.comercio.id = :comercioId AND p.marca IS NOT NULL AND p.marca <> ''")
+    List<String> findDistinctMarcasByComercioId(@org.springframework.data.repository.query.Param("comercioId") Long comercioId);
 }
 

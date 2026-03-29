@@ -112,6 +112,18 @@ public class ProductoController {
         return ResponseEntity.ok(cats);
     }
 
+    // Marcas distintas del comercio (para combobox dinámico)
+    @GetMapping("/marcas")
+    public ResponseEntity<List<String>> getMarcas(
+            @RequestParam(required = false) Integer comercioId,
+            HttpServletRequest request) {
+        Integer cid = comercioId != null ? comercioId : extractComercioId(request);
+        if (cid == null) return ResponseEntity.ok(List.of());
+        List<String> marcas = productoRepository.findDistinctMarcasByComercioId(Long.valueOf(cid));
+        marcas.sort(String::compareToIgnoreCase);
+        return ResponseEntity.ok(marcas);
+    }
+
     // Productos con stock bajo (stock <= stockMinimo)
     @GetMapping("/low-stock")
     public ResponseEntity<List<ProductoDTO>> getLowStock() {
