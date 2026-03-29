@@ -1,6 +1,7 @@
 package com.comerciosconecta.backend.controller;
 
 import com.comerciosconecta.backend.dto.ProductoDTO;
+import com.comerciosconecta.backend.repository.ProductoRepository;
 import com.comerciosconecta.backend.repository.UsuarioRepository;
 import com.comerciosconecta.backend.security.JwtUtil;
 import com.comerciosconecta.backend.service.ProductoService;
@@ -9,9 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/productos")
@@ -20,11 +20,13 @@ public class ProductoController {
     private final ProductoService productoService;
     private final JwtUtil jwtUtil;
     private final UsuarioRepository usuarioRepository;
+    private final ProductoRepository productoRepository;
 
-    public ProductoController(ProductoService productoService, JwtUtil jwtUtil, UsuarioRepository usuarioRepository) {
+    public ProductoController(ProductoService productoService, JwtUtil jwtUtil, UsuarioRepository usuarioRepository, ProductoRepository productoRepository) {
         this.productoService = productoService;
         this.jwtUtil = jwtUtil;
         this.usuarioRepository = usuarioRepository;
+        this.productoRepository = productoRepository;
     }
 
     private Integer extractComercioId(HttpServletRequest request) {
@@ -96,6 +98,18 @@ public class ProductoController {
             }
             return ResponseEntity.badRequest().body(Map.of("message", msg));
         }
+    }
+
+    // Categorías distintas del comercio (para combobox dinámico)
+    @GetMapping("/categorias")
+    public ResponseEntity<List<String>> getCategorias(
+            @RequestParam(required = false) Integer comercioId,
+            HttpServletRequest request) {
+        Integer cid = comercioId != null ? comercioId : extractComercioId(request);
+        if (cid == null) return ResponseEntity.ok(List.of());
+        List<String> cats = productoRepository.findDistinctCategoriasByComercioId(Long.valueOf(cid));
+        cats.sort(String::compareToIgnoreCase);
+        return ResponseEntity.ok(cats);
     }
 
     // Productos con stock bajo (stock <= stockMinimo)
