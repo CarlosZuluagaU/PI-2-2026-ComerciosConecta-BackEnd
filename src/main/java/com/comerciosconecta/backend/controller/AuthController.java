@@ -117,7 +117,14 @@ public class AuthController {
             com.comerciosconecta.backend.entity.Usuario u = usuarioOpt.get();
 
             if (body.containsKey("nombre") && !body.get("nombre").isBlank()) u.setNombre(body.get("nombre"));
+            if (body.containsKey("apellido")) u.setApellido(body.get("apellido"));
             if (body.containsKey("telefono")) u.setTelefono(body.get("telefono"));
+            if (body.containsKey("tipoDocumento")) u.setTipoDocumento(body.get("tipoDocumento"));
+            if (body.containsKey("numeroDocumento")) u.setNumeroDocumento(body.get("numeroDocumento"));
+            if (body.containsKey("fechaNacimiento")) u.setFechaNacimiento(body.get("fechaNacimiento"));
+            if (body.containsKey("ciudad")) u.setCiudad(body.get("ciudad"));
+            if (body.containsKey("direccion")) u.setDireccion(body.get("direccion"));
+            if (body.containsKey("biografia")) u.setBiografia(body.get("biografia"));
             if (body.containsKey("password") && !body.get("password").isBlank())
                 u.setPassword(passwordEncoder.encode(body.get("password")));
 
@@ -136,9 +143,16 @@ public class AuthController {
             usuarioRepository.save(u);
 
             java.util.HashMap<String, Object> resp = new java.util.HashMap<>();
-            resp.put("nombre", u.getNombre() != null ? u.getNombre() : "");
-            resp.put("email", u.getEmail());
-            resp.put("telefono", u.getTelefono() != null ? u.getTelefono() : "");
+            resp.put("nombre",          u.getNombre()          != null ? u.getNombre()          : "");
+            resp.put("apellido",        u.getApellido()        != null ? u.getApellido()        : "");
+            resp.put("email",           u.getEmail());
+            resp.put("telefono",        u.getTelefono()        != null ? u.getTelefono()        : "");
+            resp.put("tipoDocumento",   u.getTipoDocumento()   != null ? u.getTipoDocumento()   : "");
+            resp.put("numeroDocumento", u.getNumeroDocumento() != null ? u.getNumeroDocumento() : "");
+            resp.put("fechaNacimiento", u.getFechaNacimiento() != null ? u.getFechaNacimiento() : "");
+            resp.put("ciudad",          u.getCiudad()          != null ? u.getCiudad()          : "");
+            resp.put("direccion",       u.getDireccion()       != null ? u.getDireccion()       : "");
+            resp.put("biografia",       u.getBiografia()       != null ? u.getBiografia()       : "");
 
             // Si el email cambió, el JWT anterior ya no es válido — devolver nuevos tokens
             if (emailChanged) {
@@ -163,16 +177,23 @@ public class AuthController {
         try {
             String token = header.substring(7);
             String email = jwtUtil.extractUsername(token);
-            Integer cid = usuarioRepository.findByEmail(email)
-                    .map(u -> u.getComercio() != null ? u.getComercio().getId() : null)
-                    .orElse(null);
-            var u2 = usuarioRepository.findByEmail(email).orElseThrow();
-            return ResponseEntity.ok(Map.of(
-                "email", email,
-                "nombre", u2.getNombre() != null ? u2.getNombre() : "",
-                "telefono", u2.getTelefono() != null ? u2.getTelefono() : "",
-                "comercioId", cid != null ? cid : ""
-            ));
+            var uOpt = usuarioRepository.findByEmail(email);
+            if (uOpt.isEmpty()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            com.comerciosconecta.backend.entity.Usuario u = uOpt.get();
+            Integer cid = u.getComercio() != null ? u.getComercio().getId() : null;
+            java.util.HashMap<String, Object> me = new java.util.HashMap<>();
+            me.put("email",           u.getEmail());
+            me.put("nombre",          u.getNombre()          != null ? u.getNombre()          : "");
+            me.put("apellido",        u.getApellido()        != null ? u.getApellido()        : "");
+            me.put("telefono",        u.getTelefono()        != null ? u.getTelefono()        : "");
+            me.put("tipoDocumento",   u.getTipoDocumento()   != null ? u.getTipoDocumento()   : "");
+            me.put("numeroDocumento", u.getNumeroDocumento() != null ? u.getNumeroDocumento() : "");
+            me.put("fechaNacimiento", u.getFechaNacimiento() != null ? u.getFechaNacimiento() : "");
+            me.put("ciudad",          u.getCiudad()          != null ? u.getCiudad()          : "");
+            me.put("direccion",       u.getDireccion()       != null ? u.getDireccion()       : "");
+            me.put("biografia",       u.getBiografia()       != null ? u.getBiografia()       : "");
+            me.put("comercioId",      cid != null ? cid : "");
+            return ResponseEntity.ok(me);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
