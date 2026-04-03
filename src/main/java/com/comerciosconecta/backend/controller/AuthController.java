@@ -111,20 +111,43 @@ public class AuthController {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         try {
-            String email = jwtUtil.extractUsername(header.substring(7));
-            var usuarioOpt = usuarioRepository.findByEmail(email);
+            String currentEmail = jwtUtil.extractUsername(header.substring(7));
+            var usuarioOpt = usuarioRepository.findByEmail(currentEmail);
             if (usuarioOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             com.comerciosconecta.backend.entity.Usuario u = usuarioOpt.get();
+
             if (body.containsKey("nombre") && !body.get("nombre").isBlank()) u.setNombre(body.get("nombre"));
             if (body.containsKey("telefono")) u.setTelefono(body.get("telefono"));
             if (body.containsKey("password") && !body.get("password").isBlank())
                 u.setPassword(passwordEncoder.encode(body.get("password")));
+
+            boolean emailChanged = false;
+            if (body.containsKey("email") && !body.get("email").isBlank()) {
+                String newEmail = body.get("email").trim().toLowerCase();
+                if (!newEmail.equals(u.getEmail())) {
+                    if (usuarioRepository.findByEmail(newEmail).isPresent()) {
+                        return ResponseEntity.badRequest().body(Map.of("message", "Ya existe una cuenta con ese correo"));
+                    }
+                    u.setEmail(newEmail);
+                    emailChanged = true;
+                }
+            }
+
             usuarioRepository.save(u);
-            return ResponseEntity.ok(Map.of(
-                "nombre", u.getNombre() != null ? u.getNombre() : "",
-                "email", u.getEmail(),
-                "telefono", u.getTelefono() != null ? u.getTelefono() : ""
-            ));
+
+            java.util.HashMap<String, Object> resp = new java.util.HashMap<>();
+            resp.put("nombre", u.getNombre() != null ? u.getNombre() : "");
+            resp.put("email", u.getEmail());
+            resp.put("telefono", u.getTelefono() != null ? u.getTelefono() : "");
+
+            // Si el email cambió, el JWT anterior ya no es válido — devolver nuevos tokens
+            if (emailChanged) {
+                UserDetails ud = userDetailsService.loadUserByUsername(u.getEmail());
+                resp.put("accessToken", jwtUtil.generateAccessToken(ud));
+                resp.put("refreshToken", jwtUtil.generateRefreshToken(ud));
+            }
+
+            return ResponseEntity.ok(resp);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
