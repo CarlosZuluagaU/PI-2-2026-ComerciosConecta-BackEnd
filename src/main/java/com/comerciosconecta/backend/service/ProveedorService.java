@@ -17,10 +17,11 @@ public class ProveedorService {
         this.proveedorRepository = proveedorRepository;
     }
 
-    public List<ProveedorDTO> listarProveedores() {
-        return proveedorRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public List<ProveedorDTO> listarProveedores(Integer comercioId) {
+        List<Proveedor> lista = (comercioId != null)
+                ? proveedorRepository.findByComercioId(comercioId)
+                : proveedorRepository.findAll();
+        return lista.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     public ProveedorDTO guardarProveedor(ProveedorDTO dto) {
@@ -34,7 +35,7 @@ public class ProveedorService {
                 dto.getEstado(),
                 dto.getProductos()
         );
-
+        proveedor.setComercioId(dto.getComercioId());
         Proveedor saved = proveedorRepository.save(proveedor);
         return convertToDTO(saved);
     }
@@ -50,6 +51,7 @@ public class ProveedorService {
         proveedor.setTipo(dto.getTipo());
         proveedor.setEstado(dto.getEstado());
         proveedor.setProductos(dto.getProductos());
+        if (dto.getComercioId() != null) proveedor.setComercioId(dto.getComercioId());
         return convertToDTO(proveedorRepository.save(proveedor));
     }
 
@@ -60,6 +62,7 @@ public class ProveedorService {
     private ProveedorDTO convertToDTO(Proveedor proveedor) {
         return new ProveedorDTO(
                 proveedor.getId(),
+                proveedor.getComercioId(),
                 proveedor.getNombre(),
                 proveedor.getContacto(),
                 proveedor.getTelefono(),

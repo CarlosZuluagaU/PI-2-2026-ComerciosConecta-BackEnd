@@ -12,6 +12,9 @@ public class Proveedor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "comercio_id")
+    private Integer comercioId;
+
     @Column(nullable = false)
     private String nombre;
 
@@ -48,6 +51,9 @@ public class Proveedor {
     // ===== Getters y Setters =====
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }

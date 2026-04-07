@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import java.util.Map;
 
@@ -39,7 +40,9 @@ public class AuthController {
         comercio.setNombre(req.getComercioNombre());
         comercio.setNit(req.getNit());
         comercio.setDireccion(req.getDireccion());
+        comercio.setCiudad(req.getCiudad());
         comercio.setTelefono(req.getTelefono());
+        comercio.setCategorias(req.getCategoria());
         comercio.setEmail(req.getEmail());
         comercio = comercioRepository.save(comercio);
 
@@ -49,9 +52,18 @@ public class AuthController {
             return rolRepository.save(r);
         });
 
-        // Crear usuario
+        // Crear usuario — dividir nombre completo si no viene apellido separado
+        String nombreBase = req.getNombre() != null ? req.getNombre().trim() : "";
+        String apellidoBase = req.getApellido() != null && !req.getApellido().isBlank() ? req.getApellido().trim() : null;
+        if (apellidoBase == null && nombreBase.contains(" ")) {
+            int idx = nombreBase.indexOf(' ');
+            apellidoBase = nombreBase.substring(idx + 1).trim();
+            nombreBase  = nombreBase.substring(0, idx).trim();
+        }
+
         Usuario usuario = new Usuario();
-        usuario.setNombre(req.getNombre());
+        usuario.setNombre(nombreBase);
+        if (apellidoBase != null && !apellidoBase.isBlank()) usuario.setApellido(apellidoBase);
         usuario.setEmail(req.getEmail());
         usuario.setPassword(passwordEncoder.encode(req.getPassword()));
         usuario.setEstado(EstadoGeneral.Activo);
@@ -63,7 +75,8 @@ public class AuthController {
         UserDetails ud = userDetailsService.loadUserByUsername(req.getEmail());
         String accessToken = jwtUtil.generateAccessToken(ud);
         String refreshToken = jwtUtil.generateRefreshToken(ud);
-        return ResponseEntity.ok(new AuthResponse(accessToken, jwtUtil.getAccessExpirationMs(), refreshToken, comercio.getId(), usuario.getNombre()));
+        String fullName = usuario.getNombre() + (usuario.getApellido() != null && !usuario.getApellido().isBlank() ? " " + usuario.getApellido() : "");
+        return ResponseEntity.ok(new AuthResponse(accessToken, jwtUtil.getAccessExpirationMs(), refreshToken, comercio.getId(), fullName));
     }
 
     // ===== LOGIN =====
@@ -106,6 +119,7 @@ public class AuthController {
     }
 
     // ===== UPDATE PROFILE =====
+    @Transactional
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body, jakarta.servlet.http.HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -125,8 +139,16 @@ public class AuthController {
             if (body.containsKey("ciudad")) u.setCiudad(body.get("ciudad"));
             if (body.containsKey("direccion")) u.setDireccion(body.get("direccion"));
             if (body.containsKey("biografia")) u.setBiografia(body.get("biografia"));
-            if (body.containsKey("password") && !body.get("password").isBlank())
+            if (body.containsKey("password") && !body.get("password").isBlank()) {
+                String currentPassword = body.get("currentPassword");
+                if (currentPassword == null || currentPassword.isBlank()) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Debes ingresar tu contraseña actual para cambiarla"));
+                }
+                if (!passwordEncoder.matches(currentPassword, u.getPassword())) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "La contraseña actual es incorrecta"));
+                }
                 u.setPassword(passwordEncoder.encode(body.get("password")));
+            }
 
             boolean emailChanged = false;
             if (body.containsKey("email") && !body.get("email").isBlank()) {
@@ -141,18 +163,22 @@ public class AuthController {
             }
 
             usuarioRepository.save(u);
+            usuarioRepository.flush(); // garantiza que el INSERT/UPDATE llega a la DB dentro de la transacción
+
+            // Re-fetch desde DB para responder con lo que realmente quedó persistido
+            com.comerciosconecta.backend.entity.Usuario persisted = usuarioRepository.findByEmail(u.getEmail()).orElse(u);
 
             java.util.HashMap<String, Object> resp = new java.util.HashMap<>();
-            resp.put("nombre",          u.getNombre()          != null ? u.getNombre()          : "");
-            resp.put("apellido",        u.getApellido()        != null ? u.getApellido()        : "");
-            resp.put("email",           u.getEmail());
-            resp.put("telefono",        u.getTelefono()        != null ? u.getTelefono()        : "");
-            resp.put("tipoDocumento",   u.getTipoDocumento()   != null ? u.getTipoDocumento()   : "");
-            resp.put("numeroDocumento", u.getNumeroDocumento() != null ? u.getNumeroDocumento() : "");
-            resp.put("fechaNacimiento", u.getFechaNacimiento() != null ? u.getFechaNacimiento() : "");
-            resp.put("ciudad",          u.getCiudad()          != null ? u.getCiudad()          : "");
-            resp.put("direccion",       u.getDireccion()       != null ? u.getDireccion()       : "");
-            resp.put("biografia",       u.getBiografia()       != null ? u.getBiografia()       : "");
+            resp.put("nombre",          persisted.getNombre()          != null ? persisted.getNombre()          : "");
+            resp.put("apellido",        persisted.getApellido()        != null ? persisted.getApellido()        : "");
+            resp.put("email",           persisted.getEmail());
+            resp.put("telefono",        persisted.getTelefono()        != null ? persisted.getTelefono()        : "");
+            resp.put("tipoDocumento",   persisted.getTipoDocumento()   != null ? persisted.getTipoDocumento()   : "");
+            resp.put("numeroDocumento", persisted.getNumeroDocumento() != null ? persisted.getNumeroDocumento() : "");
+            resp.put("fechaNacimiento", persisted.getFechaNacimiento() != null ? persisted.getFechaNacimiento() : "");
+            resp.put("ciudad",          persisted.getCiudad()          != null ? persisted.getCiudad()          : "");
+            resp.put("direccion",       persisted.getDireccion()       != null ? persisted.getDireccion()       : "");
+            resp.put("biografia",       persisted.getBiografia()       != null ? persisted.getBiografia()       : "");
 
             // Si el email cambió, el JWT anterior ya no es válido — devolver nuevos tokens
             if (emailChanged) {
@@ -193,6 +219,8 @@ public class AuthController {
             me.put("direccion",       u.getDireccion()       != null ? u.getDireccion()       : "");
             me.put("biografia",       u.getBiografia()       != null ? u.getBiografia()       : "");
             me.put("comercioId",      cid != null ? cid : "");
+            me.put("comercioNombre",  u.getComercio() != null && u.getComercio().getNombre() != null ? u.getComercio().getNombre() : "");
+            me.put("createdAt",       u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
             return ResponseEntity.ok(me);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

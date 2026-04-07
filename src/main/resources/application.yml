@@ -1,5 +1,7 @@
 server:
   port: 8080
+  tomcat:
+    max-http-form-post-size: 10MB
 
 spring:
   profiles:
@@ -7,6 +9,10 @@ spring:
   # Configuración común a todos los perfiles
   application:
     name: ComerciosConecta_Backend
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 # =========== PERFIL DE DESARROLLO (local) ===========
 ---
@@ -75,7 +81,9 @@ spring:
     show-sql: false  # Desactivar en producción
 
   flyway:
-    enabled: false
+    enabled: true
+    baseline-on-migrate: true   # no falla si las tablas ya existen (V1-V3 se marcan como aplicadas)
+    baseline-version: 3         # asume que V1, V2, V3 ya fueron aplicadas
 
 ---
 # =========== CONFIGURACIÓN COMÚN ===========

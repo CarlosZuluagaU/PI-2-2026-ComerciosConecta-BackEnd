@@ -18,8 +18,8 @@ public class ProveedorController {
     }
 
     @GetMapping
-    public List<ProveedorDTO> listar() {
-        return proveedorService.listarProveedores();
+    public List<ProveedorDTO> listar(@RequestParam(required = false) Integer comercioId) {
+        return proveedorService.listarProveedores(comercioId);
     }
 
     @PostMapping

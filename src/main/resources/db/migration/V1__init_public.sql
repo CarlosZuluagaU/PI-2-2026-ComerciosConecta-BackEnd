@@ -3,9 +3,9 @@ CREATE TABLE comercio (
                           nombre varchar,
                           nit varchar,
                           direccion varchar,
+                          ciudad varchar(100),
                           telefono varchar,
                           email varchar,
-
                           created_at timestamp DEFAULT now()
 );
 
@@ -19,6 +19,14 @@ CREATE TABLE usuario (
                          id serial PRIMARY KEY,
                          comercio_id int REFERENCES comercio(id),
                          nombre varchar,
+                         apellido varchar(255),
+                         telefono varchar(50),
+                         tipo_documento varchar(50),
+                         numero_documento varchar(100),
+                         fecha_nacimiento varchar(30),
+                         ciudad varchar(100),
+                         direccion varchar(255),
+                         biografia varchar(500),
                          email varchar UNIQUE,
                          password varchar,
                          estado varchar,

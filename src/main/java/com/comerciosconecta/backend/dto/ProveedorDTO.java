@@ -8,6 +8,7 @@ import java.util.List;
 public class ProveedorDTO {
 
     private Long id;
+    private Integer comercioId;
     private String nombre;
     private String contacto;
     private String telefono;
@@ -19,10 +20,11 @@ public class ProveedorDTO {
 
     public ProveedorDTO() {}
 
-    public ProveedorDTO(Long id, String nombre, String contacto, String telefono,
+    public ProveedorDTO(Long id, Integer comercioId, String nombre, String contacto, String telefono,
                         String email, String direccion, TipoProveedor tipo,
                         EstadoProveedor estado, List<String> productos) {
         this.id = id;
+        this.comercioId = comercioId;
         this.nombre = nombre;
         this.contacto = contacto;
         this.telefono = telefono;
@@ -41,6 +43,14 @@ public class ProveedorDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Integer getComercioId() {
+        return comercioId;
+    }
+
+    public void setComercioId(Integer comercioId) {
+        this.comercioId = comercioId;
     }
 
     public String getNombre() {
