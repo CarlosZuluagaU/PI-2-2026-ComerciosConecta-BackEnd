@@ -5,6 +5,7 @@ import com.comerciosconecta.backend.dto.CompraResumenDTO;
 import com.comerciosconecta.backend.service.CompraService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,8 +30,9 @@ public class CompraController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CompraResumenDTO>> listarCompras() {
-        return ResponseEntity.ok(compraService.listarCompras());
+    public ResponseEntity<List<CompraResumenDTO>> listarCompras(
+            @RequestParam(required = false) Integer comercioId) {
+        return ResponseEntity.ok(compraService.listarCompras(comercioId));
     }
 
     @GetMapping("/{id}")

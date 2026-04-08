@@ -42,6 +42,7 @@ public class CompraService {
         compra.setIva(dto.getIva());
         compra.setTotal(dto.getTotal());
         compra.setEstado(dto.getEstado() != null ? dto.getEstado() : EstadoCompra.Pendiente);
+        if (dto.getComercioId() != null) compra.setComercioId(dto.getComercioId());
 
         // Crear items
         List<CompraItem> items = dto.getItems().stream().map(itemDto -> {
@@ -68,9 +69,12 @@ public class CompraService {
         return dto;
     }
 
-    // Listar compras (resumen)
-    public List<CompraResumenDTO> listarCompras() {
-        return compraRepository.findAll().stream().map(compra -> {
+    // Listar compras (resumen) — filtradas por comercio si se provee
+    public List<CompraResumenDTO> listarCompras(Integer comercioId) {
+        List<Compra> lista = (comercioId != null)
+                ? compraRepository.findByComercioId(comercioId)
+                : compraRepository.findAll();
+        return lista.stream().map(compra -> {
             CompraResumenDTO dto = new CompraResumenDTO();
             dto.setId(compra.getId());
             dto.setNumeroFactura(compra.getNumeroFactura());

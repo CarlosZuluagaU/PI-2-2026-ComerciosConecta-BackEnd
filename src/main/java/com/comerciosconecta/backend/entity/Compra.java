@@ -13,6 +13,9 @@ public class Compra {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "comercio_id")
+    private Integer comercioId;
+
     @Column(unique = true, nullable = false)
     private String numeroFactura;
 
@@ -47,6 +50,9 @@ public class Compra {
     // ===== Getters y Setters =====
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
 
     public String getNumeroFactura() { return numeroFactura; }
     public void setNumeroFactura(String numeroFactura) { this.numeroFactura = numeroFactura; }

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class CompraDTO {
 
     private Long id;
+    private Integer comercioId;
     private String numeroFactura;
     private Long proveedorId;
 
@@ -25,6 +26,9 @@ public class CompraDTO {
     // ===== Getters y Setters =====
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
 
     public String getNumeroFactura() { return numeroFactura; }
     public void setNumeroFactura(String numeroFactura) { this.numeroFactura = numeroFactura; }
