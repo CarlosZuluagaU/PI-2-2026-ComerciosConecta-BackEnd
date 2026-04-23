@@ -120,6 +120,9 @@ public class Comercio {
     @Column(name = "hover_btn")
     private String hoverBtn = "oscurecer";
 
+    @Column(name = "color_hover_btn")
+    private String colorHoverBtn = "";
+
     public Comercio() {}
 
     public Comercio(String nombre, String nit, String direccion, String telefono, String email) {
@@ -252,4 +255,7 @@ public class Comercio {
 
     public String getHoverBtn() { return hoverBtn; }
     public void setHoverBtn(String hoverBtn) { this.hoverBtn = hoverBtn; }
+
+    public String getColorHoverBtn() { return colorHoverBtn; }
+    public void setColorHoverBtn(String colorHoverBtn) { this.colorHoverBtn = colorHoverBtn; }
 }
