@@ -123,6 +123,12 @@ public class Comercio {
     @Column(name = "color_hover_btn")
     private String colorHoverBtn = "";
 
+    @Column(name = "color_header_bg")
+    private String colorHeaderBg = "#1F3B4D";
+
+    @Column(name = "color_footer_bg")
+    private String colorFooterBg = "#1F3B4D";
+
     public Comercio() {}
 
     public Comercio(String nombre, String nit, String direccion, String telefono, String email) {
@@ -258,4 +264,10 @@ public class Comercio {
 
     public String getColorHoverBtn() { return colorHoverBtn; }
     public void setColorHoverBtn(String colorHoverBtn) { this.colorHoverBtn = colorHoverBtn; }
+
+    public String getColorHeaderBg() { return colorHeaderBg; }
+    public void setColorHeaderBg(String colorHeaderBg) { this.colorHeaderBg = colorHeaderBg; }
+
+    public String getColorFooterBg() { return colorFooterBg; }
+    public void setColorFooterBg(String colorFooterBg) { this.colorFooterBg = colorFooterBg; }
 }
