@@ -1,0 +1,1 @@
+ALTER TABLE comercio ADD COLUMN IF NOT EXISTS hover_btn VARCHAR(30) DEFAULT 'oscurecer';

@@ -74,6 +74,7 @@ public class ComercioService {
         if (datos.getColorNombre()            != null) comercio.setColorNombre(datos.getColorNombre());
         if (datos.getColorTagline()           != null) comercio.setColorTagline(datos.getColorTagline());
         if (datos.getLayout()                 != null) comercio.setLayout(datos.getLayout());
+        if (datos.getHoverBtn()               != null) comercio.setHoverBtn(datos.getHoverBtn());
 
         return comercioRepository.save(comercio);
     }

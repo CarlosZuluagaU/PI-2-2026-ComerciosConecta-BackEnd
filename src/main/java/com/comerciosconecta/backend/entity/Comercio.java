@@ -117,6 +117,9 @@ public class Comercio {
     @Column(name = "layout")
     private String layout = "clasico";
 
+    @Column(name = "hover_btn")
+    private String hoverBtn = "oscurecer";
+
     public Comercio() {}
 
     public Comercio(String nombre, String nit, String direccion, String telefono, String email) {
@@ -246,4 +249,7 @@ public class Comercio {
 
     public String getLayout() { return layout; }
     public void setLayout(String layout) { this.layout = layout; }
+
+    public String getHoverBtn() { return hoverBtn; }
+    public void setHoverBtn(String hoverBtn) { this.hoverBtn = hoverBtn; }
 }
