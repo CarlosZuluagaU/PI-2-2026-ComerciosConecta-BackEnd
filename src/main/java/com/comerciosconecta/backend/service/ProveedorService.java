@@ -43,6 +43,9 @@ public class ProveedorService {
     public ProveedorDTO actualizarProveedor(Long id, ProveedorDTO dto) {
         Proveedor proveedor = proveedorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+        if (dto.getComercioId() != null && !dto.getComercioId().equals(proveedor.getComercioId())) {
+            throw new RuntimeException("No tienes permiso para modificar este proveedor");
+        }
         proveedor.setNombre(dto.getNombre());
         proveedor.setContacto(dto.getContacto());
         proveedor.setTelefono(dto.getTelefono());
@@ -50,12 +53,16 @@ public class ProveedorService {
         proveedor.setDireccion(dto.getDireccion());
         proveedor.setTipo(dto.getTipo());
         proveedor.setEstado(dto.getEstado());
-        proveedor.setProductos(dto.getProductos());
-        if (dto.getComercioId() != null) proveedor.setComercioId(dto.getComercioId());
+        if (dto.getProductos() != null) proveedor.setProductos(dto.getProductos());
         return convertToDTO(proveedorRepository.save(proveedor));
     }
 
-    public void eliminarProveedor(Long id) {
+    public void eliminarProveedor(Long id, Integer comercioId) {
+        Proveedor proveedor = proveedorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+        if (comercioId != null && !comercioId.equals(proveedor.getComercioId())) {
+            throw new RuntimeException("No tienes permiso para eliminar este proveedor");
+        }
         proveedorRepository.deleteById(id);
     }
 

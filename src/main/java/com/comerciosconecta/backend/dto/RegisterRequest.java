@@ -13,6 +13,7 @@ public class RegisterRequest {
     private String nit;
     private String tipoDocumento;
     private String direccion;
+    private String departamento;
     private String ciudad;
     private String telefono;
     private String categoria;
@@ -46,9 +47,17 @@ public class RegisterRequest {
     public String getTipoDocumento() { return tipoDocumento; }
     public void setTipoDocumento(String tipoDocumento) { this.tipoDocumento = tipoDocumento; }
 
+    public String getDepartamento() { return departamento; }
+    public void setDepartamento(String departamento) { this.departamento = departamento; }
+
     public String getCiudad() { return ciudad; }
     public void setCiudad(String ciudad) { this.ciudad = ciudad; }
 
     public String getCategoria() { return categoria; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
+
+    private String googleSub;
+
+    public String getGoogleSub() { return googleSub; }
+    public void setGoogleSub(String googleSub) { this.googleSub = googleSub; }
 }

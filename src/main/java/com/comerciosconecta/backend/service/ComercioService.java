@@ -37,6 +37,21 @@ public class ComercioService {
                 .orElseThrow(() -> new RuntimeException("Comercio no encontrado"));
     }
 
+    public Comercio actualizarPerfil(Long id, java.util.Map<String, String> datos) {
+        Comercio comercio = comercioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comercio no encontrado"));
+        if (datos.containsKey("nombre")        && !datos.get("nombre").isBlank())   comercio.setNombre(datos.get("nombre"));
+        if (datos.containsKey("nit")           && !datos.get("nit").isBlank())      comercio.setNit(datos.get("nit"));
+        if (datos.containsKey("tipoDocumento") && !datos.get("tipoDocumento").isBlank()) { /* stored as reference only */ }
+        if (datos.containsKey("departamento"))  comercio.setDepartamento(datos.get("departamento"));
+        if (datos.containsKey("ciudad")        && !datos.get("ciudad").isBlank())   comercio.setCiudad(datos.get("ciudad"));
+        if (datos.containsKey("direccion"))     comercio.setDireccion(datos.get("direccion"));
+        if (datos.containsKey("telefono"))      comercio.setTelefono(datos.get("telefono"));
+        if (datos.containsKey("categoria"))     comercio.setCategorias(datos.get("categoria"));
+        comercio.setPerfilCompleto(true);
+        return comercioRepository.save(comercio);
+    }
+
     public Comercio actualizarApariencia(Long id, Comercio datos) {
         Comercio comercio = comercioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Comercio no encontrado"));
@@ -78,6 +93,7 @@ public class ComercioService {
         if (datos.getColorHoverBtn()          != null) comercio.setColorHoverBtn(datos.getColorHoverBtn());
         if (datos.getColorHeaderBg()          != null) comercio.setColorHeaderBg(datos.getColorHeaderBg());
         if (datos.getColorFooterBg()          != null) comercio.setColorFooterBg(datos.getColorFooterBg());
+        if (datos.getHeaderDisplay()          != null) comercio.setHeaderDisplay(datos.getHeaderDisplay());
 
         return comercioRepository.save(comercio);
     }

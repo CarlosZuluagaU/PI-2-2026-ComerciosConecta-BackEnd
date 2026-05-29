@@ -4,6 +4,7 @@ import com.comerciosconecta.backend.dto.FacturaResponseDTO;
 import com.comerciosconecta.backend.dto.VentaDTO;
 import com.comerciosconecta.backend.entity.InvoiceRecord;
 import com.comerciosconecta.backend.entity.Venta;
+import com.comerciosconecta.backend.repository.ComercioRepository;
 import com.comerciosconecta.backend.repository.InvoiceRecordRepository;
 import com.comerciosconecta.backend.repository.VentaRepository;
 import com.comerciosconecta.backend.service.VentaService;
@@ -22,13 +23,16 @@ public class VentaController {
     private final VentaService ventaService;
     private final VentaRepository ventaRepository;
     private final InvoiceRecordRepository invoiceRepo;
+    private final ComercioRepository comercioRepository;
 
     public VentaController(VentaService ventaService,
                            VentaRepository ventaRepository,
-                           InvoiceRecordRepository invoiceRepo) {
+                           InvoiceRecordRepository invoiceRepo,
+                           ComercioRepository comercioRepository) {
         this.ventaService = ventaService;
         this.ventaRepository = ventaRepository;
         this.invoiceRepo = invoiceRepo;
+        this.comercioRepository = comercioRepository;
     }
 
     // ============================================================
@@ -72,26 +76,21 @@ public class VentaController {
                 venta.setMunicipalityId(980);
             }
 
-            // Establecer datos del establecimiento si no están presentes
-            if (venta.getEstablecimientoNombre() == null) {
-                venta.setEstablecimientoNombre("SuperMarket");
+            // Poblar datos del establecimiento desde el Comercio registrado
+            if (comercioId != null) {
+                comercioRepository.findById(Long.valueOf(comercioId)).ifPresent(c -> {
+                    if (venta.getEstablecimientoNombre()    == null && c.getNombre()    != null) venta.setEstablecimientoNombre(c.getNombre());
+                    if (venta.getEstablecimientoDireccion() == null && c.getDireccion() != null) venta.setEstablecimientoDireccion(c.getDireccion());
+                    if (venta.getEstablecimientoTelefono()  == null && c.getTelefono()  != null) venta.setEstablecimientoTelefono(c.getTelefono());
+                    if (venta.getEstablecimientoEmail()     == null && c.getEmail()     != null) venta.setEstablecimientoEmail(c.getEmail());
+                });
             }
-
-            if (venta.getEstablecimientoDireccion() == null) {
-                venta.setEstablecimientoDireccion("calle 10 # 3-13");
-            }
-
-            if (venta.getEstablecimientoTelefono() == null) {
-                venta.setEstablecimientoTelefono("0987654321");
-            }
-
-            if (venta.getEstablecimientoEmail() == null) {
-                venta.setEstablecimientoEmail("supermarket@gmail.com");
-            }
-
-            if (venta.getEstablecimientoMunicipioId() == null) {
-                venta.setEstablecimientoMunicipioId(980);
-            }
+            // Fallbacks si el comercio no tiene esos campos aún
+            if (venta.getEstablecimientoNombre()    == null) venta.setEstablecimientoNombre("ComerciosConecta");
+            if (venta.getEstablecimientoDireccion() == null) venta.setEstablecimientoDireccion("calle 10 # 3-13");
+            if (venta.getEstablecimientoTelefono()  == null) venta.setEstablecimientoTelefono("0987654321");
+            if (venta.getEstablecimientoEmail()     == null) venta.setEstablecimientoEmail("comerciosconecta@gmail.com");
+            if (venta.getEstablecimientoMunicipioId() == null) venta.setEstablecimientoMunicipioId(980);
 
             Venta v = ventaService.crearVenta(venta);
             return ResponseEntity.status(HttpStatus.CREATED).body(v);

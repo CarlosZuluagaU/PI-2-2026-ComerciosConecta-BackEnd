@@ -2,6 +2,7 @@ package com.comerciosconecta.backend.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -46,14 +47,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Deshabilita CSRF
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Permite todas las requests
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-        // JWT filter deshabilitado temporalmente para desarrollo
-        // http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                // ── Auth público ──
+                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
+                // ── Tienda pública — productos ──
+                .requestMatchers(HttpMethod.GET, "/api/productos", "/api/productos/**").permitAll()
+                // ── Apariencia del comercio (para cargar la tienda) ──
+                .requestMatchers(HttpMethod.GET, "/api/comercios/*/apariencia").permitAll()
+                // ── Checkout público ──
+                .requestMatchers(HttpMethod.POST, "/api/checkout/create-order").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/checkout/create-payment-link/**").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/checkout/orders/by-uuid/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/checkout/orders/by-uuid/**").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/checkout/orders/buscar").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/checkout/orders/*/cancelar").permitAll()
+                // ── Webhook Wompi ──
+                .requestMatchers(HttpMethod.POST, "/api/wompi/webhook").permitAll()
+                // ── Envíos — solo cálculo (checkout) y seguimiento público ──
+                .requestMatchers(HttpMethod.POST, "/api/envios/calcular").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/envios/seguimiento/**").permitAll()
+                // ── Herramientas de desarrollo ──
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**").permitAll()
+                // ── Todo lo demás requiere JWT ──
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -4,6 +4,7 @@ import com.comerciosconecta.backend.entity.PaymentRecord;
 import com.comerciosconecta.backend.repository.PaymentRecordRepository;
 import com.comerciosconecta.backend.repository.OrderRepository;
 import com.comerciosconecta.backend.service.CheckoutService;
+import com.comerciosconecta.backend.service.EnvioService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +20,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RequestMapping("/api/wompi")
 public class WompiWebhookController {
 
+    // Jerarquía de estados: un estado nunca puede retroceder a uno de menor prioridad
+    private static final java.util.Map<String, Integer> STATUS_PRIORITY = java.util.Map.of(
+            "CREATED",          0,
+            "PENDING_PAYMENT",  1,
+            "FAILED",           2,
+            "CANCELLED",        2,
+            "PAID",             3,
+            "PROCESSING",       4,
+            "COMPLETED",        5
+    );
+
+    private boolean canTransition(String current, String next) {
+        int currentPriority = STATUS_PRIORITY.getOrDefault(current.toUpperCase(), 0);
+        int nextPriority    = STATUS_PRIORITY.getOrDefault(next.toUpperCase(), 0);
+        return nextPriority > currentPriority;
+    }
+
     private final CheckoutService checkoutService;
     private final PaymentRecordRepository paymentRecordRepository;
     private final OrderRepository orderRepository;
+    private final EnvioService envioService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${wompi.events-secret}")
@@ -29,10 +48,12 @@ public class WompiWebhookController {
 
     public WompiWebhookController(CheckoutService checkoutService,
                                   PaymentRecordRepository paymentRecordRepository,
-                                  OrderRepository orderRepository) {
+                                  OrderRepository orderRepository,
+                                  EnvioService envioService) {
         this.checkoutService = checkoutService;
         this.paymentRecordRepository = paymentRecordRepository;
         this.orderRepository = orderRepository;
+        this.envioService = envioService;
     }
 
     @PostMapping("/webhook")
@@ -111,15 +132,24 @@ public class WompiWebhookController {
             // Find order by reference (uuid) -> update statuses
             if (reference != null && !reference.isEmpty()) {
                 orderRepository.findByUuid(reference).ifPresent(order -> {
+                    String currentStatus = order.getStatus();
                     if ("APPROVED".equalsIgnoreCase(status)) {
-                        checkoutService.markOrderPaidAndDecreaseStock(txId, order.getId());
+                        if (canTransition(currentStatus, "PAID")) {
+                            checkoutService.markOrderPaidAndDecreaseStock(txId, order.getId());
+                            try { envioService.marcarPreparando(order.getId()); } catch (Exception ignored) {}
+                        }
                     } else if ("DECLINED".equalsIgnoreCase(status) || "ERROR".equalsIgnoreCase(status)) {
-                        checkoutService.markOrderFailed(order.getId());
-                    } else {
-                        // other statuses: PENDING, etc. You may update as needed
-                        order.setStatus(status);
-                        order.setUpdatedAt(java.time.LocalDateTime.now());
-                        orderRepository.save(order);
+                        if (canTransition(currentStatus, "FAILED")) {
+                            checkoutService.markOrderFailed(order.getId());
+                        }
+                    } else if ("PENDING".equalsIgnoreCase(status)) {
+                        // PENDING de Wompi: la orden ya está en PENDING_PAYMENT, no hacer nada
+                        // Solo actualizar si la orden aún está en CREATED (caso borde)
+                        if ("CREATED".equalsIgnoreCase(currentStatus)) {
+                            order.setStatus("PENDING_PAYMENT");
+                            order.setUpdatedAt(java.time.LocalDateTime.now());
+                            orderRepository.save(order);
+                        }
                     }
                 });
             }

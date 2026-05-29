@@ -23,6 +23,9 @@ public class Order {
     private String customerAddress;
     private String customerCity;
 
+    @Column(name = "customer_document")
+    private String customerDocument;
+
     private Long totalInCents;
     private String currency;
     private String status; // CREATED, PENDING_PAYMENT, PAID, FAILED, CANCELLED
@@ -32,6 +35,28 @@ public class Order {
 
     @Column(name = "comercio_order_number")
     private Integer comercioOrderNumber;
+
+    // Envío
+    @Column(name = "tipo_envio")
+    private String tipoEnvio;
+
+    @Column(name = "shipping_cost_in_cents")
+    private Long shippingCostInCents = 0L;
+
+    @Column(name = "direccion_destino", columnDefinition = "TEXT")
+    private String direccionDestino;
+
+    @Column(name = "ciudad_destino")
+    private String ciudadDestino;
+
+    @Column(name = "departamento_destino")
+    private String departamentoDestino;
+
+    @Column(name = "lat_destino")
+    private Double latDestino;
+
+    @Column(name = "lng_destino")
+    private Double lngDestino;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -108,6 +133,9 @@ public class Order {
     public String getCustomerCity() { return customerCity; }
     public void setCustomerCity(String customerCity) { this.customerCity = customerCity; }
 
+    public String getCustomerDocument() { return customerDocument; }
+    public void setCustomerDocument(String customerDocument) { this.customerDocument = customerDocument; }
+
     public Long getTotalInCents() {
         return totalInCents;
     }
@@ -161,5 +189,25 @@ public class Order {
     public void setItems(List<OrderItem> items) {
         this.items = items;
     }
-    // ...
+
+    public String getTipoEnvio() { return tipoEnvio; }
+    public void setTipoEnvio(String tipoEnvio) { this.tipoEnvio = tipoEnvio; }
+
+    public Long getShippingCostInCents() { return shippingCostInCents; }
+    public void setShippingCostInCents(Long shippingCostInCents) { this.shippingCostInCents = shippingCostInCents; }
+
+    public String getDireccionDestino() { return direccionDestino; }
+    public void setDireccionDestino(String direccionDestino) { this.direccionDestino = direccionDestino; }
+
+    public String getCiudadDestino() { return ciudadDestino; }
+    public void setCiudadDestino(String ciudadDestino) { this.ciudadDestino = ciudadDestino; }
+
+    public String getDepartamentoDestino() { return departamentoDestino; }
+    public void setDepartamentoDestino(String departamentoDestino) { this.departamentoDestino = departamentoDestino; }
+
+    public Double getLatDestino() { return latDestino; }
+    public void setLatDestino(Double latDestino) { this.latDestino = latDestino; }
+
+    public Double getLngDestino() { return lngDestino; }
+    public void setLngDestino(Double lngDestino) { this.lngDestino = lngDestino; }
 }

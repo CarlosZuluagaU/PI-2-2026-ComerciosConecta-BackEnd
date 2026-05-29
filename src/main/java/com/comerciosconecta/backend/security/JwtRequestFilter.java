@@ -23,11 +23,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // Ignorar las rutas de autenticación para que login/refresh/logout funcionen
+    // Only skip public auth endpoints — protected ones (/me, /profile, /link-google) need JWT
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/api/auth/") || path.startsWith("/api/ventas/");  //Camiar permiso en producción
+        return path.equals("/api/auth/login")
+            || path.equals("/api/auth/register")
+            || path.equals("/api/auth/refresh")
+            || path.equals("/api/auth/logout");
     }
 
     @Override

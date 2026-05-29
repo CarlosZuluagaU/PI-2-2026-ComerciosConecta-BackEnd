@@ -13,6 +13,7 @@ public class CompraDTO {
     private Integer comercioId;
     private String numeroFactura;
     private Long proveedorId;
+    private String proveedorNombre;
 
     private LocalDate fechaCompra;
     private Double subtotal;
@@ -35,6 +36,9 @@ public class CompraDTO {
 
     public Long getProveedorId() { return proveedorId; }
     public void setProveedorId(Long proveedorId) { this.proveedorId = proveedorId; }
+
+    public String getProveedorNombre() { return proveedorNombre; }
+    public void setProveedorNombre(String proveedorNombre) { this.proveedorNombre = proveedorNombre; }
 
     public LocalDate getFechaCompra() { return fechaCompra; }
     public void setFechaCompra(LocalDate fechaCompra) { this.fechaCompra = fechaCompra; }

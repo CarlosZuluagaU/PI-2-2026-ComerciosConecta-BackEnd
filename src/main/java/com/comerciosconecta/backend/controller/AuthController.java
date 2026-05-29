@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -40,10 +41,13 @@ public class AuthController {
         comercio.setNombre(req.getComercioNombre());
         comercio.setNit(req.getNit());
         comercio.setDireccion(req.getDireccion());
+        comercio.setDepartamento(req.getDepartamento());
         comercio.setCiudad(req.getCiudad());
         comercio.setTelefono(req.getTelefono());
         comercio.setCategorias(req.getCategoria());
         comercio.setEmail(req.getEmail());
+        // perfilCompleto = false when skipped (nit placeholder "00000000")
+        comercio.setPerfilCompleto(!"00000000".equals(req.getNit()));
         comercio = comercioRepository.save(comercio);
 
         // Obtener o crear rol ADMIN
@@ -66,6 +70,9 @@ public class AuthController {
         if (apellidoBase != null && !apellidoBase.isBlank()) usuario.setApellido(apellidoBase);
         usuario.setEmail(req.getEmail());
         usuario.setPassword(passwordEncoder.encode(req.getPassword()));
+        if (req.getGoogleSub() != null && !req.getGoogleSub().isBlank()) {
+            usuario.setGoogleSub(req.getGoogleSub());
+        }
         usuario.setEstado(EstadoGeneral.Activo);
         usuario.setComercio(comercio);
         usuario.getRoles().add(rolAdmin);
@@ -82,6 +89,22 @@ public class AuthController {
     // ===== LOGIN =====
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
+        // Google sub auth: check stored google_sub before BCrypt (avoids authManager for Google logins)
+        if (req.getPassword() != null && req.getPassword().startsWith("google_")) {
+            String sub = req.getPassword().substring(7);
+            var uOpt = usuarioRepository.findByEmail(req.getEmail());
+            if (uOpt.isPresent() && sub.equals(uOpt.get().getGoogleSub())) {
+                Usuario u = uOpt.get();
+                UserDetails ud2 = userDetailsService.loadUserByUsername(u.getEmail());
+                String at = jwtUtil.generateAccessToken(ud2);
+                String rt = jwtUtil.generateRefreshToken(ud2);
+                Integer cid = u.getComercio() != null ? u.getComercio().getId() : null;
+                String fn = u.getNombre() != null ? u.getNombre() : "";
+                if (u.getApellido() != null && !u.getApellido().isBlank()) fn += " " + u.getApellido();
+                return ResponseEntity.ok(new AuthResponse(at, jwtUtil.getAccessExpirationMs(), rt, cid, fn));
+            }
+        }
+
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
         UserDetails ud = (UserDetails) auth.getPrincipal();
@@ -91,9 +114,70 @@ public class AuthController {
 
         var usuarioOpt = usuarioRepository.findByEmail(req.getEmail());
         Integer comercioId = usuarioOpt.map(u -> u.getComercio() != null ? u.getComercio().getId() : null).orElse(null);
-        String nombre = usuarioOpt.map(com.comerciosconecta.backend.entity.Usuario::getNombre).orElse(null);
+        String nombre = usuarioOpt.map(u -> {
+            String n = u.getNombre() != null ? u.getNombre() : "";
+            return (u.getApellido() != null && !u.getApellido().isBlank()) ? n + " " + u.getApellido() : n;
+        }).orElse(null);
 
         return ResponseEntity.ok(new AuthResponse(accessToken, jwtUtil.getAccessExpirationMs(), refreshToken, comercioId, nombre));
+    }
+
+    // ===== LINK GOOGLE =====
+    @Transactional
+    @PostMapping("/link-google")
+    public ResponseEntity<?> linkGoogle(@RequestBody Map<String, String> body, jakarta.servlet.http.HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        String googleAccessToken = body.get("googleAccessToken");
+        if (googleAccessToken == null || googleAccessToken.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("message", "Token de Google requerido"));
+
+        try {
+            // Fetch Google user info
+            RestTemplate rt = new RestTemplate();
+            org.springframework.http.HttpHeaders gh = new org.springframework.http.HttpHeaders();
+            gh.set("Authorization", "Bearer " + googleAccessToken);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> gData = rt.exchange(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                HttpMethod.GET,
+                new org.springframework.http.HttpEntity<>(gh),
+                Map.class
+            ).getBody();
+
+            if (gData == null) return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of("message", "No se pudo verificar el token de Google"));
+
+            String gEmail = (String) gData.get("email");
+            String gSub   = (String) gData.get("sub");
+            String gName  = (String) gData.getOrDefault("name", "");
+            String gPic   = (String) gData.getOrDefault("picture", "");
+
+            String currentEmail = jwtUtil.extractUsername(header.substring(7));
+            if (!currentEmail.equalsIgnoreCase(gEmail)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "message", "El correo de Google (" + gEmail + ") no coincide con tu cuenta (" + currentEmail + ")"
+                ));
+            }
+
+            var uOpt = usuarioRepository.findByEmail(currentEmail);
+            if (uOpt.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
+            Usuario u = uOpt.get();
+            u.setGoogleSub(gSub);
+            usuarioRepository.save(u);
+
+            return ResponseEntity.ok(Map.of(
+                "message",       "Cuenta vinculada con Google exitosamente",
+                "googleEmail",   gEmail,
+                "googleName",    gName,
+                "googlePicture", gPic,
+                "googleSub",     gSub
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Error al vincular: " + e.getMessage()));
+        }
     }
 
     // ===== REFRESH TOKEN =====
@@ -218,9 +302,11 @@ public class AuthController {
             me.put("ciudad",          u.getCiudad()          != null ? u.getCiudad()          : "");
             me.put("direccion",       u.getDireccion()       != null ? u.getDireccion()       : "");
             me.put("biografia",       u.getBiografia()       != null ? u.getBiografia()       : "");
-            me.put("comercioId",      cid != null ? cid : "");
-            me.put("comercioNombre",  u.getComercio() != null && u.getComercio().getNombre() != null ? u.getComercio().getNombre() : "");
-            me.put("createdAt",       u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
+            me.put("comercioId",       cid != null ? cid : "");
+            me.put("comercioNombre",   u.getComercio() != null && u.getComercio().getNombre() != null ? u.getComercio().getNombre() : "");
+            me.put("perfilCompleto",   u.getComercio() != null && u.getComercio().isPerfilCompleto());
+            me.put("googleLinked",     u.getGoogleSub() != null && !u.getGoogleSub().isBlank());
+            me.put("createdAt",        u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
             return ResponseEntity.ok(me);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

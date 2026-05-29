@@ -16,17 +16,20 @@ public class CheckoutService {
     private final ProductoRepository productoRepository;
     private final ClienteRepository clienteRepository;
     private final VentaRepository ventaRepository;
+    private final EnvioService envioService;
 
     public CheckoutService(OrderRepository orderRepository,
                            PaymentRecordRepository paymentRecordRepository,
                            ProductoRepository productoRepository,
                            ClienteRepository clienteRepository,
-                           VentaRepository ventaRepository) {
+                           VentaRepository ventaRepository,
+                           EnvioService envioService) {
         this.orderRepository = orderRepository;
         this.paymentRecordRepository = paymentRecordRepository;
         this.productoRepository = productoRepository;
         this.clienteRepository = clienteRepository;
         this.ventaRepository = ventaRepository;
+        this.envioService = envioService;
     }
 
     public Order getOrderById(Long id) {
@@ -38,6 +41,18 @@ public class CheckoutService {
     public Order createOrder(String customerName, String customerEmail, String customerPhone,
                              String customerAddress, String customerCity,
                              List<OrderItem> items, Long totalInCents, Integer comercioId) {
+        return createOrder(customerName, customerEmail, customerPhone, customerAddress, customerCity,
+                items, totalInCents, comercioId, null, null, 0L, null, null, null, null, null);
+    }
+
+    @Transactional
+    public Order createOrder(String customerName, String customerEmail, String customerPhone,
+                             String customerAddress, String customerCity,
+                             List<OrderItem> items, Long totalInCents, Integer comercioId,
+                             String customerDocument,
+                             String tipoEnvio, Long shippingCostInCents,
+                             String direccionDestino, String ciudadDestino, String departamentoDestino,
+                             Double latDestino, Double lngDestino) {
         Order o = new Order();
         o.setUuid(UUID.randomUUID().toString());
         o.setCustomerName(customerName);
@@ -45,6 +60,7 @@ public class CheckoutService {
         o.setCustomerPhone(customerPhone);
         o.setCustomerAddress(customerAddress);
         o.setCustomerCity(customerCity);
+        o.setCustomerDocument(customerDocument);
         o.setTotalInCents(totalInCents);
         o.setCurrency("COP");
         o.setStatus("CREATED");
@@ -54,38 +70,60 @@ public class CheckoutService {
         o.setCreatedAt(LocalDateTime.now());
         o.setUpdatedAt(LocalDateTime.now());
 
+        // Campos de envío
+        o.setTipoEnvio(tipoEnvio);
+        o.setShippingCostInCents(shippingCostInCents != null ? shippingCostInCents : 0L);
+        o.setDireccionDestino(direccionDestino);
+        o.setCiudadDestino(ciudadDestino);
+        o.setDepartamentoDestino(departamentoDestino);
+        o.setLatDestino(latDestino);
+        o.setLngDestino(lngDestino);
+
         for (OrderItem item : items) {
             item.setOrder(o);
         }
         o.setItems(items);
         Order saved = orderRepository.save(o);
 
-        // Registrar cliente automáticamente si no existe para este comercio
+        // El envío se crea solo cuando el pago sea confirmado, no aquí.
+
+        // Registrar o actualizar cliente automáticamente (sin duplicar por email ni documento)
         try {
-            if (customerEmail != null && !customerEmail.isBlank()) {
-                boolean exists = comercioId != null
-                    ? clienteRepository.findByCorreoAndComercioId(customerEmail, comercioId).isPresent()
-                    : clienteRepository.findByCorreo(customerEmail).isPresent();
-                if (!exists) {
-                    boolean docExists = comercioId != null
-                        ? clienteRepository.findByNumeroDocumentoAndComercioId(customerEmail, comercioId).isPresent()
-                        : clienteRepository.findByNumeroDocumento(customerEmail).isPresent();
-                    if (!docExists) {
-                        Cliente cliente = new Cliente();
-                        cliente.setTipoDocumento("CC");
-                        cliente.setNumeroDocumento(customerEmail);
-                        String[] parts = customerName != null ? customerName.split(" ", 2) : new String[]{"", ""};
-                        cliente.setNombres(parts[0]);
-                        cliente.setApellidos(parts.length > 1 ? parts[1] : "");
-                        cliente.setTelefono(customerPhone);
-                        cliente.setCorreo(customerEmail);
-                        cliente.setDireccion(customerAddress);
-                        cliente.setCiudad(customerCity);
-                        cliente.setEstado("Activo");
-                        cliente.setComercioId(comercioId);
-                        clienteRepository.save(cliente);
-                    }
-                }
+            String docToStore = (customerDocument != null && !customerDocument.isBlank() && !customerDocument.contains("@"))
+                    ? customerDocument : null;
+
+            java.util.Optional<Cliente> byEmail = (customerEmail != null && !customerEmail.isBlank())
+                ? (comercioId != null
+                    ? clienteRepository.findByCorreoAndComercioId(customerEmail, comercioId)
+                    : clienteRepository.findByCorreo(customerEmail))
+                : java.util.Optional.empty();
+
+            java.util.Optional<Cliente> byDoc = byEmail.isEmpty() && docToStore != null
+                ? (comercioId != null
+                    ? clienteRepository.findByNumeroDocumentoAndComercioId(docToStore, comercioId)
+                    : clienteRepository.findByNumeroDocumento(docToStore))
+                : java.util.Optional.empty();
+
+            Cliente cliente = byEmail.or(() -> byDoc).orElse(null);
+
+            if (cliente != null) {
+                // Client already exists — do not overwrite admin-managed data.
+                // The order is recorded with the checkout values; the Cliente record stays as-is.
+            } else if (customerEmail != null && !customerEmail.isBlank()) {
+                // New client
+                Cliente nuevo = new Cliente();
+                nuevo.setTipoDocumento("CC");
+                nuevo.setNumeroDocumento(docToStore != null ? docToStore : "");
+                String[] parts = customerName != null ? customerName.split(" ", 2) : new String[]{"", ""};
+                nuevo.setNombres(parts[0]);
+                nuevo.setApellidos(parts.length > 1 ? parts[1] : "");
+                nuevo.setTelefono(customerPhone);
+                nuevo.setCorreo(customerEmail);
+                nuevo.setDireccion(customerAddress);
+                nuevo.setCiudad(customerCity);
+                nuevo.setEstado("Activo");
+                nuevo.setComercioId(comercioId);
+                clienteRepository.save(nuevo);
             }
         } catch (Exception ignored) {
             // No interrumpir el flujo si falla el registro del cliente
@@ -115,6 +153,19 @@ public class CheckoutService {
                 }
             }
         }
+
+        // Crear el envío ahora que el pago está confirmado (solo si no existe ya)
+        if (order.getTipoEnvio() != null && !order.getTipoEnvio().isBlank()
+                && order.getComercioId() != null) {
+            try {
+                envioService.crearEnvioSiNoExiste(order.getId(), order.getComercioId(),
+                        order.getTipoEnvio(), order.getDireccionDestino(),
+                        order.getCiudadDestino(), order.getDepartamentoDestino(),
+                        order.getLatDestino(), order.getLngDestino(),
+                        order.getShippingCostInCents() != null ? order.getShippingCostInCents() : 0L,
+                        order.getTotalInCents());
+            } catch (Exception ignored) {}
+        }
     }
 
     /** Descuenta stock y devuelve los productos que quedaron en mínimo o menos */
@@ -136,11 +187,60 @@ public class CheckoutService {
         return lowStock;
     }
 
+    public void markOrderPendingPayment(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+        order.setStatus("PENDING_PAYMENT");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+    }
+
     public void markOrderFailed(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
         order.setStatus("FAILED");
         order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
+        envioService.cancelarEnvioPorOrden(orderId);
+    }
+
+    @Transactional
+    public void restoreStockForOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+        for (OrderItem item : order.getItems()) {
+            if (item.getProductoId() == null) continue;
+            Producto producto = productoRepository.findById(item.getProductoId()).orElse(null);
+            if (producto != null) {
+                producto.setStock(producto.getStock() + item.getCantidad());
+                productoRepository.save(producto);
+            }
+        }
+    }
+
+    @Transactional
+    public Order cancelOrderByCustomer(String uuid, String customerEmail) {
+        Order order = orderRepository.findByUuid(uuid)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+        if (!order.getCustomerEmail().equalsIgnoreCase(customerEmail)) {
+            throw new RuntimeException("El email no coincide con el de la orden");
+        }
+        if (!"PAID".equalsIgnoreCase(order.getStatus())) {
+            throw new RuntimeException("Solo se pueden cancelar órdenes en estado Pagada");
+        }
+
+        // Restaurar stock de cada producto
+        for (OrderItem item : order.getItems()) {
+            if (item.getProductoId() == null) continue;
+            Producto producto = productoRepository.findById(item.getProductoId()).orElse(null);
+            if (producto == null) continue;
+            producto.setStock(producto.getStock() + item.getCantidad());
+            productoRepository.save(producto);
+        }
+
+        order.setStatus("CANCELLED");
+        order.setUpdatedAt(LocalDateTime.now());
+        Order saved = orderRepository.save(order);
+        envioService.cancelarEnvioPorOrden(saved.getId());
+        return saved;
     }
 
     @Transactional
@@ -148,10 +248,13 @@ public class CheckoutService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + orderId));
 
-        // Marcar como enviada
-        order.setStatus("PROCESSING");
-        order.setUpdatedAt(LocalDateTime.now());
-        orderRepository.save(order);
+        // Marcar como enviada solo si aún no está en un estado posterior
+        if (!"PROCESSING".equalsIgnoreCase(order.getStatus())
+                && !"COMPLETED".equalsIgnoreCase(order.getStatus())) {
+            order.setStatus("PROCESSING");
+            order.setUpdatedAt(LocalDateTime.now());
+            orderRepository.save(order);
+        }
 
         // Crear Venta a partir de la orden
         Venta venta = new Venta();
@@ -160,10 +263,11 @@ public class CheckoutService {
         venta.setEmailCliente(order.getCustomerEmail());
         venta.setTelefonoCliente(order.getCustomerPhone());
         venta.setDireccionCliente(order.getCustomerAddress() != null ? order.getCustomerAddress() : "");
+        // Use the customer's document collected at checkout; fall back to "consumidor final" NIT.
+        String docNum = order.getCustomerDocument();
+        if (docNum == null || docNum.isBlank() || docNum.contains("@")) docNum = "222222222222";
         venta.setTipoDocumentoCliente("CC");
-        venta.setNumeroDocumentoCliente(
-            order.getCustomerEmail() != null ? order.getCustomerEmail() : order.getCustomerPhone()
-        );
+        venta.setNumeroDocumentoCliente(docNum);
         venta.setDvCliente("1");
         venta.setNota("Pedido online ORD-" + order.getId());
         venta.setReferencia(order.getUuid());
@@ -200,7 +304,7 @@ public class CheckoutService {
             vi.setPorcentajeIva(19.0);
             vi.setDescuentoRate(0.0);
             vi.setUnidadMedidaId(70);
-            vi.setStandardCodeId(999);
+            vi.setStandardCodeId(1);
             vi.setIsExcluded(0);
             vi.setTributeId(1);
             vi.setVenta(venta);

@@ -98,15 +98,18 @@ public class CompraService {
         dto.setId(compra.getId());
         dto.setNumeroFactura(compra.getNumeroFactura());
         dto.setProveedorId(compra.getProveedor().getId());
+        dto.setProveedorNombre(compra.getProveedor().getNombre());
         dto.setFechaCompra(compra.getFechaCompra());
         dto.setSubtotal(compra.getSubtotal());
         dto.setIva(compra.getIva());
         dto.setTotal(compra.getTotal());
         dto.setEstado(compra.getEstado());
+        dto.setComercioId(compra.getComercioId());
 
         List<CompraItemDTO> items = compra.getItems().stream().map(item -> {
             CompraItemDTO itemDto = new CompraItemDTO();
             itemDto.setProductoId(item.getProducto().getId());
+            itemDto.setProductoNombre(item.getProducto().getNombre());
             itemDto.setCantidad(item.getCantidad());
             itemDto.setPrecioUnitario(item.getPrecioUnitario());
             itemDto.setSubtotal(item.getSubtotal());
@@ -115,6 +118,14 @@ public class CompraService {
 
         dto.setItems(items);
         return dto;
+    }
+
+    public CompraDTO recibirCompra(Long id) {
+        Compra compra = compraRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Compra no encontrada: " + id));
+        compra.setEstado(EstadoCompra.Completada);
+        compraRepository.save(compra);
+        return obtenerCompra(id);
     }
 
 }

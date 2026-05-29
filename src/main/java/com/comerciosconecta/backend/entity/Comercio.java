@@ -14,6 +14,7 @@ public class Comercio {
     private String nombre;
     private String nit;
     private String direccion;
+    private String departamento;
     private String ciudad;
     private String telefono;
     private String email;
@@ -129,6 +130,15 @@ public class Comercio {
     @Column(name = "color_footer_bg")
     private String colorFooterBg = "#1F3B4D";
 
+    @Column(name = "color_carrito_bg")
+    private String colorCarritoBg = "#ffffff";
+
+    @Column(name = "header_display")
+    private String headerDisplay = "logo-nombre-slogan";
+
+    @Column(name = "perfil_completo")
+    private boolean perfilCompleto = false;
+
     public Comercio() {}
 
     public Comercio(String nombre, String nit, String direccion, String telefono, String email) {
@@ -150,6 +160,9 @@ public class Comercio {
 
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+
+    public String getDepartamento() { return departamento; }
+    public void setDepartamento(String departamento) { this.departamento = departamento; }
 
     public String getCiudad() { return ciudad; }
     public void setCiudad(String ciudad) { this.ciudad = ciudad; }
@@ -270,4 +283,13 @@ public class Comercio {
 
     public String getColorFooterBg() { return colorFooterBg; }
     public void setColorFooterBg(String colorFooterBg) { this.colorFooterBg = colorFooterBg; }
+
+    public String getColorCarritoBg() { return colorCarritoBg; }
+    public void setColorCarritoBg(String colorCarritoBg) { this.colorCarritoBg = colorCarritoBg; }
+
+    public String getHeaderDisplay() { return headerDisplay; }
+    public void setHeaderDisplay(String headerDisplay) { this.headerDisplay = headerDisplay; }
+
+    public boolean isPerfilCompleto() { return perfilCompleto; }
+    public void setPerfilCompleto(boolean perfilCompleto) { this.perfilCompleto = perfilCompleto; }
 }

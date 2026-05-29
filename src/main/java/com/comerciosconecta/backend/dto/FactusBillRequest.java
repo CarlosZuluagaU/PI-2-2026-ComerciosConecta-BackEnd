@@ -1,9 +1,6 @@
 package com.comerciosconecta.backend.dto;
 
-import java.util.List;
-
-
-
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,6 +15,9 @@ public class FactusBillRequest {
     private FactusEstablishmentDto establishment;
     private FactusCustomerDto customer;
     private List<FactusItemDto> items;
+
+    // Factus rejects an empty array — omit the field entirely when there are no charges/discounts
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<FactusAllowanceChargeDto> allowance_charges;
 
     // Constructor vacío

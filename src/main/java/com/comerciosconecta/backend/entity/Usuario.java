@@ -55,6 +55,9 @@ public class Usuario {
     )
     private Set<Rol> roles = new HashSet<>();
 
+    @Column(name = "google_sub")
+    private String googleSub;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -180,6 +183,14 @@ public class Usuario {
 
     public void setRoles(Set<Rol> roles) {
         this.roles = roles;
+    }
+
+    public String getGoogleSub() {
+        return googleSub;
+    }
+
+    public void setGoogleSub(String googleSub) {
+        this.googleSub = googleSub;
     }
 
     public LocalDateTime getCreatedAt() {

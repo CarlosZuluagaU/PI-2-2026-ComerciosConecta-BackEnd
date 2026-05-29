@@ -115,18 +115,22 @@ public class VentaService {
 
         // ================= CLIENTE DTO =================
         FactusCustomerDto customerDto = new FactusCustomerDto();
-        customerDto.setIdentification(venta.getNumeroDocumentoCliente());
-        customerDto.setDv(calcularDigitoVerificacion(venta.getNumeroDocumentoCliente())); // Método para calcular DV
+        String docNum = venta.getNumeroDocumentoCliente();
+        // 222222222222 is 12 digits (consumidor final NIT). Real CC is 8-10 digits.
+        boolean isNit = docNum != null && docNum.length() > 10;
+        customerDto.setIdentification(docNum);
+        customerDto.setDv(calcularDigitoVerificacion(docNum));
         customerDto.setCompany("");
         customerDto.setTrade_name("");
         customerDto.setNames(venta.getNombreCliente());
-        customerDto.setAddress("calle 1 # 2-68"); // Dirección del cliente
+        customerDto.setAddress(venta.getDireccionCliente() != null && !venta.getDireccionCliente().isBlank()
+                ? venta.getDireccionCliente() : "Sin dirección");
         customerDto.setEmail(venta.getEmailCliente());
         customerDto.setPhone(venta.getTelefonoCliente());
-        customerDto.setLegal_organization_id(2); // Ajustar según organización legal
-        customerDto.setTribute_id(21); // Ajustar según tributo
-        customerDto.setIdentification_document_id(3); // Ajustar según tipo documento
-        customerDto.setMunicipality_id(980); // Ajustar según municipio
+        customerDto.setLegal_organization_id(1); // 1=Persona Natural (B2C + consumidor final)
+        customerDto.setTribute_id(21); // 21=No Responsable IVA
+        customerDto.setIdentification_document_id(isNit ? 6 : 13); // 6=NIT, 13=CC
+        customerDto.setMunicipality_id(980);
 
         // ================= ÍTEMS DTO =================
         List<FactusItemDto> itemsDto = (venta.getItems() == null)
@@ -144,47 +148,38 @@ public class VentaService {
             // Crear lista de withholding taxes vacía por defecto
             List<FactusWithholdingTaxDto> withholdingTaxes = new ArrayList<>();
 
+            // 999 was an old invalid fallback; treat it as "not set" and use 1 (UNSPSC)
+            int stdCode = (item.getStandardCodeId() != null && item.getStandardCodeId() != 999)
+                    ? item.getStandardCodeId() : 1;
+            int unitMeasure = item.getUnidadMedidaId() != null ? item.getUnidadMedidaId() : 70;
+            int tributeId   = item.getTributeId()     != null ? item.getTributeId()     : 1;
+            double discount = item.getDescuentoRate() != null ? item.getDescuentoRate() : 0.0;
+            int isExcluded  = item.getIsExcluded()    != null ? item.getIsExcluded()    : 0;
+
             return new FactusItemDto(
-                    item.getCodigoProducto(),        // code_reference
-                    item.getNombre(),                // name
-                    item.getCantidad(),              // quantity
-                    0.0,                            // discount_rate (ajustar según necesidad)
-                    precioUnitario,                  // price
-                    taxRate,                         // tax_rate
-                    70,                             // unit_measure_id (Unidad)
-                    1,                              // standard_code_id
-                    0,                              // is_excluded
-                    1,                              // tribute_id
-                    withholdingTaxes                 // withholding_taxes
+                    item.getCodigoProducto(),
+                    item.getNombre(),
+                    item.getCantidad(),
+                    discount,
+                    precioUnitario,
+                    taxRate,
+                    unitMeasure,
+                    stdCode,
+                    isExcluded,
+                    tributeId,
+                    withholdingTaxes
             );
         }).collect(Collectors.toList());
 
         // ================= ALLOWANCE CHARGES =================
         List<FactusAllowanceChargeDto> allowanceCharges = new ArrayList<>();
 
-// Exactamente como en tu curl original que funciona
-        FactusAllowanceChargeDto allowanceCharge = new FactusAllowanceChargeDto();
-        allowanceCharge.setConcept_type("03");     // "03"
-        allowanceCharge.setIs_surcharge(true);     // true
-        allowanceCharge.setReason("Propina");      // "Propina"
-        allowanceCharge.setBase_amount(90000.00);  // 90000.00
-        allowanceCharge.setAmount(9000.00);        // 9000.00
-
-        allowanceCharges.add(allowanceCharge);
-
-        System.out.println("Allowance Charges configurado (igual al curl original):");
-        System.out.println("   - Concept Type: " + allowanceCharge.getConcept_type());
-        System.out.println("   - Is Surcharge: " + allowanceCharge.getIs_surcharge());
-        System.out.println("   - Reason: " + allowanceCharge.getReason());
-        System.out.println("   - Base Amount: " + allowanceCharge.getBase_amount());
-        System.out.println("   - Amount: " + allowanceCharge.getAmount());
-
 
         // ================= REQUEST FINAL =================
         FactusBillRequest factusRequest = new FactusBillRequest();
         factusRequest.setDocument("01"); // Factura de venta
         factusRequest.setNumbering_range_id(numberingRangeId);
-        factusRequest.setReference_code("fact" + ventaId + "2025"); // Código de referencia único
+        factusRequest.setReference_code("F" + ventaId + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10));
         factusRequest.setObservation(venta.getNota() != null ? venta.getNota() : "");
         factusRequest.setPayment_method_code(10); // Código método de pago
         factusRequest.setEstablishment(establishmentDto);
@@ -205,21 +200,21 @@ public class VentaService {
             record.setRawResponse(resp != null ? resp.toString() : "NULL RESPONSE");
         }
 
-        if (resp != null && (
-                "OK".equalsIgnoreCase(resp.getStatus()) ||
-                "Created".equalsIgnoreCase(resp.getStatus()))) {
+        // Factus returns status as integer 201 in the JSON body on success.
+        // Consider success when: no explicit errors AND data is present.
+        boolean hasExplicitErrors = resp != null && resp.getErrors() != null && !resp.getErrors().isEmpty();
+        boolean hasData = resp != null && resp.getData() != null;
+        boolean success = hasData && !hasExplicitErrors;
+
+        if (success) {
             record.setStatus("INVOICED");
             venta.setEstado("INVOICED");
 
             Map<String, Object> data = resp.getData();
-            if (data != null) {
-                // Extraer bill_id y number según la estructura de respuesta de Factus
-                String billId = extractBillId(data);
-                String number = extractBillNumber(data);
-
-                if (billId != null) record.setFactusBillId(billId);
-                if (number != null) record.setNumber(number);
-            }
+            String billId = extractBillId(data);
+            String number = extractBillNumber(data);
+            if (billId != null) record.setFactusBillId(billId);
+            if (number != null) record.setNumber(number);
         } else {
             record.setStatus("ERROR");
             venta.setEstado("ERROR");
@@ -257,18 +252,24 @@ public class VentaService {
     }
 
     // Métodos auxiliares para extraer información de la respuesta
+    @SuppressWarnings("unchecked")
     private String extractBillId(Map<String, Object> data) {
-        // Implementar lógica para extraer bill_id según la estructura de Factus
-        if (data.containsKey("bill_id")) {
-            return data.get("bill_id").toString();
+        if (data.containsKey("bill_id")) return data.get("bill_id").toString();
+        // Factus nests it under data.bill.id
+        if (data.get("bill") instanceof Map) {
+            Map<String, Object> bill = (Map<String, Object>) data.get("bill");
+            if (bill.containsKey("id")) return bill.get("id").toString();
         }
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     private String extractBillNumber(Map<String, Object> data) {
-        // Implementar lógica para extraer number según la estructura de Factus
-        if (data.containsKey("number")) {
-            return data.get("number").toString();
+        if (data.containsKey("number")) return data.get("number").toString();
+        // Factus nests it under data.bill.number
+        if (data.get("bill") instanceof Map) {
+            Map<String, Object> bill = (Map<String, Object>) data.get("bill");
+            if (bill.containsKey("number")) return bill.get("number").toString();
         }
         return null;
     }

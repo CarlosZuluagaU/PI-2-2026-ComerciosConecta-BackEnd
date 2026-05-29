@@ -6,4 +6,7 @@ import java.util.List;
 
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
     List<Proveedor> findByComercioId(Integer comercioId);
+
+    // Para deduplicación en bulk-upload
+    boolean existsByNombreAndComercioId(String nombre, Integer comercioId);
 }

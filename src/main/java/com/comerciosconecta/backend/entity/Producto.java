@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "productos")
+@Table(name = "productos", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_producto_referencia_comercio", columnNames = {"referencia", "comercio_id"})
+})
 public class Producto {
 
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -22,7 +24,7 @@ public class Producto {
     @Column(nullable = false)
     private String nombre;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String referencia;
 
     @Column(nullable = false)

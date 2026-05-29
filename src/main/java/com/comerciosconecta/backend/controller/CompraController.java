@@ -5,14 +5,9 @@ import com.comerciosconecta.backend.dto.CompraResumenDTO;
 import com.comerciosconecta.backend.service.CompraService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/compras")
@@ -40,5 +35,12 @@ public class CompraController {
         return ResponseEntity.ok(compraService.obtenerCompra(id));
     }
 
-
+    @PatchMapping("/{id}/recibir")
+    public ResponseEntity<?> recibirCompra(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(Map.of("ok", true, "compra", compraService.recibirCompra(id)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

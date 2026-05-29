@@ -1,0 +1,1 @@
+ALTER TABLE comercio ADD COLUMN IF NOT EXISTS departamento VARCHAR(255);

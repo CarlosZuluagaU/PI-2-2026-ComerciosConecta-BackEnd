@@ -16,11 +16,17 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     // Buscar producto por referencia (que es única)
     Optional<Producto> findByReferencia(String referencia);
 
+    // Buscar por referencia + comercio (para deduplicación en bulk-upload)
+    Optional<Producto> findByReferenciaAndComercio_Id(String referencia, Long comercioId);
+
     // Verificar si existe un producto por nombre
     boolean existsByNombre(String nombre);
 
-    // Verificar si existe un producto por referencia
+    // Verificar si existe un producto por referencia (global — solo para casos sin comercio)
     boolean existsByReferencia(String referencia);
+
+    // Verificar si existe un producto por referencia dentro de un comercio específico
+    boolean existsByReferenciaAndComercio_Id(String referencia, Long comercioId);
 
     // Buscar productos por comercio
     List<Producto> findByComercioId(Long comercioId);

@@ -7,8 +7,20 @@ public class CreateOrderRequest {
     private String customerName;
     private String customerEmail;
     private String customerPhone;
+    private String customerAddress;
+    private String customerCity;
+    private Integer comercioId;
     private Long totalInCents;
     private List<Item> items;
+
+    // Envío
+    private String tipoEnvio;               // RECOGIDA | LOCAL_PROPIO | LOCAL_TRANSPORTADORA | NACIONAL_TRANSPORTADORA
+    private Long shippingCostInCents = 0L;
+    private String direccionDestino;
+    private String ciudadDestino;
+    private String departamentoDestino;
+    private Double latDestino;
+    private Double lngDestino;
 
     // Constructor vacío
     public CreateOrderRequest() {
@@ -65,6 +77,36 @@ public class CreateOrderRequest {
     public void setItems(List<Item> items) {
         this.items = items;
     }
+
+    public String getCustomerAddress() { return customerAddress; }
+    public void setCustomerAddress(String customerAddress) { this.customerAddress = customerAddress; }
+
+    public String getCustomerCity() { return customerCity; }
+    public void setCustomerCity(String customerCity) { this.customerCity = customerCity; }
+
+    public Integer getComercioId() { return comercioId; }
+    public void setComercioId(Integer comercioId) { this.comercioId = comercioId; }
+
+    public String getTipoEnvio() { return tipoEnvio; }
+    public void setTipoEnvio(String tipoEnvio) { this.tipoEnvio = tipoEnvio; }
+
+    public Long getShippingCostInCents() { return shippingCostInCents; }
+    public void setShippingCostInCents(Long shippingCostInCents) { this.shippingCostInCents = shippingCostInCents; }
+
+    public String getDireccionDestino() { return direccionDestino; }
+    public void setDireccionDestino(String direccionDestino) { this.direccionDestino = direccionDestino; }
+
+    public String getCiudadDestino() { return ciudadDestino; }
+    public void setCiudadDestino(String ciudadDestino) { this.ciudadDestino = ciudadDestino; }
+
+    public String getDepartamentoDestino() { return departamentoDestino; }
+    public void setDepartamentoDestino(String departamentoDestino) { this.departamentoDestino = departamentoDestino; }
+
+    public Double getLatDestino() { return latDestino; }
+    public void setLatDestino(Double latDestino) { this.latDestino = latDestino; }
+
+    public Double getLngDestino() { return lngDestino; }
+    public void setLngDestino(Double lngDestino) { this.lngDestino = lngDestino; }
 
     // Clase interna Item
     public static class Item {
