@@ -27,6 +27,17 @@ DO $$ DECLARE r RECORD; BEGIN
 END $$;
 
 -- Add composite unique constraint: referencia must be unique per comercio, not globally
-ALTER TABLE productos
-  ADD CONSTRAINT uk_producto_referencia_comercio
-  UNIQUE (referencia, comercio_id);
+-- Guard: skip on fresh DB (table created later by Hibernate ddl-auto)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = 'productos') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint c
+      JOIN pg_class t ON t.oid = c.conrelid
+      WHERE t.relname = 'productos' AND c.conname = 'uk_producto_referencia_comercio'
+    ) THEN
+      ALTER TABLE productos
+        ADD CONSTRAINT uk_producto_referencia_comercio
+        UNIQUE (referencia, comercio_id);
+    END IF;
+  END IF;
+END $$;
