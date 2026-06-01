@@ -136,8 +136,8 @@ public class Comercio {
     @Column(name = "header_display")
     private String headerDisplay = "logo-nombre-slogan";
 
-    @Column(name = "perfil_completo")
-    private boolean perfilCompleto = false;
+    @Column(name = "perfil_completo", nullable = false, columnDefinition = "boolean default false")
+    private Boolean perfilCompleto = false;
 
     public Comercio() {}
 
@@ -290,6 +290,6 @@ public class Comercio {
     public String getHeaderDisplay() { return headerDisplay; }
     public void setHeaderDisplay(String headerDisplay) { this.headerDisplay = headerDisplay; }
 
-    public boolean isPerfilCompleto() { return perfilCompleto; }
-    public void setPerfilCompleto(boolean perfilCompleto) { this.perfilCompleto = perfilCompleto; }
+    public boolean isPerfilCompleto() { return perfilCompleto != null && perfilCompleto; }
+    public void setPerfilCompleto(Boolean perfilCompleto) { this.perfilCompleto = perfilCompleto != null ? perfilCompleto : false; }
 }

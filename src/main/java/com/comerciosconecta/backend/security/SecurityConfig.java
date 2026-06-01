@@ -68,7 +68,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/envios/calcular").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api/envios/seguimiento/**").permitAll()
                 // ── Herramientas de desarrollo ──
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**").permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**", "/h2-console/**").permitAll()
                 // ── Todo lo demás requiere JWT ──
                 .anyRequest().authenticated()
             )
