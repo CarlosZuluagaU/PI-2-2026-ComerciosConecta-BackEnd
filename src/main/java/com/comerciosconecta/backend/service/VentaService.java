@@ -129,7 +129,7 @@ public class VentaService {
         customerDto.setPhone(venta.getTelefonoCliente());
         customerDto.setLegal_organization_id(1); // 1=Persona Natural (B2C + consumidor final)
         customerDto.setTribute_id(21); // 21=No Responsable IVA
-        customerDto.setIdentification_document_id(isNit ? 6 : 13); // 6=NIT, 13=CC
+        customerDto.setIdentification_document_id(isNit ? 6 : 3); // 6=NIT, 3=Cédula de Ciudadanía
         customerDto.setMunicipality_id(980);
 
         // ================= ÍTEMS DTO =================
@@ -141,9 +141,8 @@ public class VentaService {
             double precioUnitario = item.getPrecioSinImpuestos() != null ?
                     item.getPrecioSinImpuestos() : 0.0;
 
-            // Calcular tasa de impuesto como string
-            String taxRate = item.getPorcentajeIva() != null ?
-                    String.format("%.2f", item.getPorcentajeIva()) : "0.00";
+            // Calcular tasa de impuesto como número
+            Double taxRate = item.getPorcentajeIva() != null ? item.getPorcentajeIva() : 0.0;
 
             // Crear lista de withholding taxes vacía por defecto
             List<FactusWithholdingTaxDto> withholdingTaxes = new ArrayList<>();

@@ -100,9 +100,9 @@ app:
       - "https://front.vercel.app"
 
 wompi:
-  public-key: ${WOMPI_PUBLIC_KEY:}
-  private-key: ${WOMPI_PRIVATE_KEY:}
-  events-secret: ${WOMPI_EVENTS_SECRET:}
+  public-key: ${WOMPI_PUBLIC_KEY:pub_test_uAk0nToAZz8GnY9Gjti06j3b9piCrjzP}
+  private-key: ${WOMPI_PRIVATE_KEY:prv_test_u6Qh9ou4LH3UvJZclLLGXxneBe9AhZAX}
+  events-secret: ${WOMPI_EVENTS_SECRET:test_events_zkFgQHmvYVYS8ijg1FsqZCalpHnhfEyv}
 
 factus:
   base-url: ${FACTUS_BASE_URL:https://api-sandbox.factus.com.co}

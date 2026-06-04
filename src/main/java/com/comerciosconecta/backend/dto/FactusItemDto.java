@@ -16,7 +16,7 @@ public class FactusItemDto {
     private Double discount_rate;     // 20
 
     private Double price;             // 50000.0
-    private String tax_rate;          // "19.00"
+    private Double tax_rate;          // 19.00
 
     private Integer unit_measure_id;  // 70
     private Integer standard_code_id; // 1
@@ -32,7 +32,7 @@ public class FactusItemDto {
 
     // Constructor completo
     public FactusItemDto(String code_reference, String name, Integer quantity, Double discount_rate,
-                         Double price, String tax_rate, Integer unit_measure_id, Integer standard_code_id,
+                         Double price, Double tax_rate, Integer unit_measure_id, Integer standard_code_id,
                          Integer is_excluded, Integer tribute_id, List<FactusWithholdingTaxDto> withholding_taxes) {
         this.code_reference = code_reference;
         this.name = name;
@@ -88,11 +88,11 @@ public class FactusItemDto {
         this.price = price;
     }
 
-    public String getTax_rate() {
+    public Double getTax_rate() {
         return tax_rate;
     }
 
-    public void setTax_rate(String tax_rate) {
+    public void setTax_rate(Double tax_rate) {
         this.tax_rate = tax_rate;
     }
 
