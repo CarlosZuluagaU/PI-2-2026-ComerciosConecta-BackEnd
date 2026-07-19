@@ -118,11 +118,13 @@ public class VentaService {
         String docNum = venta.getNumeroDocumentoCliente();
         // 222222222222 is 12 digits (consumidor final NIT). Real CC is 8-10 digits.
         boolean isNit = docNum != null && docNum.length() > 10;
+        String nombreCliente = venta.getNombreCliente() != null && !venta.getNombreCliente().isBlank()
+                ? venta.getNombreCliente() : "Consumidor Final";
         customerDto.setIdentification(docNum);
         customerDto.setDv(calcularDigitoVerificacion(docNum));
-        customerDto.setCompany("");
-        customerDto.setTrade_name("");
-        customerDto.setNames(venta.getNombreCliente());
+        customerDto.setCompany(nombreCliente);
+        customerDto.setTrade_name(nombreCliente);
+        customerDto.setNames(nombreCliente);
         customerDto.setAddress(venta.getDireccionCliente() != null && !venta.getDireccionCliente().isBlank()
                 ? venta.getDireccionCliente() : "Sin dirección");
         customerDto.setEmail(venta.getEmailCliente());
